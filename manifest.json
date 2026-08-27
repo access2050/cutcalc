@@ -1,0 +1,21 @@
+{
+  "short_name": "절삭조건계산기",
+  "name": "YG-1 & NACHI 절삭 조건 계산기",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#f8f9fa",
+  "theme_color": "#0d6efd",
+  "display": "standalone",
+  "orientation": "portrait"
+}
