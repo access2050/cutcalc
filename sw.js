@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cutting-calc-v1.7.2-20260828-0930';
+const CACHE_NAME = 'cutting-calc-v1.7.2-20260828-0943';
 const ASSETS = [
   './',
   './index.html',
