@@ -1,861 +1,1119 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YG-1 & NACHI 절삭 조건 계산기 (PWA)</title>
-  
-  <!-- PWA Manifest & App Icons -->
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
-  
-  <meta name="theme-color" content="#0d6efd" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>절삭 조건 계산기 v1.8.0</title>
+
+  <!-- PWA 설정 메타 태그 -->
+  <meta name="theme-color" content="#0d6efd">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="절삭조건계산기">
+
   <style>
     :root {
       --bg-color: #f8f9fa;
       --card-bg: #ffffff;
+      --text-main: #212529;
+      --text-sub: #495057;
       --primary: #0d6efd;
       --danger: #dc3545;
-      --text-main: #212529;
-      --text-sub: #6c757d;
       --border-color: #dee2e6;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; display: flex; justify-content: center; }
-    .container { width: 100%; max-width: 500px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 16px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: '맑은 고딕', 'Malgun Gothic', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
 
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
-    .title-area h1 { font-size: 1.1rem; font-weight: 700; }
-    .title-area span { font-size: 0.75rem; color: var(--text-sub); }
-    .btn-calc { background: #6c757d; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      padding: 10px;
+    }
 
-    .form-group { margin-bottom: 10px; }
-    .form-group label { display: block; font-size: 0.85rem; font-weight: 700; color: #495057; margin-bottom: 4px; }
-    select, input { width: 100%; padding: 8px; font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 6px; background-color: #fff; outline: none; }
-    select:focus, input:focus { border-color: var(--primary); }
+    .container {
+      width: 100%;
+      max-width: 500px;
+      background: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-    .row-2 { display: flex; gap: 10px; }
-    .row-2 .col { flex: 1; }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 5px 5px 5px;
+    }
 
-    .result-box { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin: 12px 0; }
-    .result-box h3 { font-size: 0.95rem; margin-bottom: 8px; color: var(--text-main); }
-    .res-val { font-size: 1.15rem; font-weight: bold; margin-bottom: 4px; }
-    .res-rpm { color: var(--primary); }
-    .res-feed { color: var(--danger); }
-    .res-sub { font-size: 0.8rem; color: #495057; margin-bottom: 2px; }
-    .res-note { font-size: 0.8rem; color: var(--text-sub); }
+    .header h1 {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
 
-    .gauge-box { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 12px; }
-    .gauge-title { font-size: 0.8rem; font-weight: bold; color: #343a40; margin-bottom: 6px; }
-    .gauge-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.75rem; font-weight: bold; }
-    .gauge-row input[type="range"] { flex: 1; }
-    .gauge-val { width: 40px; text-align: right; }
+    .header p {
+      font-size: 0.75rem;
+      color: #8c959f;
+    }
 
-    .btn-reset { display: block; margin-left: auto; background: #e9ecef; border: 1px solid #ced4da; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
-    .btn-submit { width: 100%; background: var(--primary); color: #fff; border: none; padding: 10px; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+    .btn-mini-calc {
+      background: #6c757d;
+      color: #fff;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-    /* Modal */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: #fff; width: 90%; max-width: 360px; padding: 16px; border-radius: 8px; position: relative; }
-    .modal-header { font-weight: bold; font-size: 1rem; margin-bottom: 10px; display: flex; justify-content: space-between; }
-    .close-modal { cursor: pointer; font-size: 1.2rem; }
-    .formula-info { background: #f8f9fa; padding: 6px 8px; border-radius: 4px; font-size: 0.75rem; color: #495057; margin-bottom: 10px; }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: var(--text-sub);
+    }
+
+    select, input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background-color: var(--card-bg);
+      outline: none;
+    }
+
+    .opt-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* 결과 출력 창 */
+    .result-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .result-card h2 {
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .res-rpm {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .res-feed {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: var(--danger);
+    }
+
+    .res-spec {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+    }
+
+    .res-note {
+      font-size: 0.8rem;
+      color: #6c757d;
+    }
+
+    /* RPM / FEED 보정 게이지 영역 (투명도 없이 명확한 불투명 배경 적용) */
+    .gauge-box {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .gauge-box legend {
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #343a40;
+      padding: 0 4px;
+    }
+
+    .gauge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .gauge-row label {
+      width: 75px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .gauge-row input[type="range"] {
+      flex: 1;
+    }
+
+    .gauge-val {
+      width: 45px;
+      text-align: right;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .gauge-val.rpm { color: var(--primary); }
+    .gauge-val.feed { color: var(--danger); }
+
+    .btn-reset-gauge {
+      align-self: flex-end;
+      background: #e9ecef;
+      border: 1px solid var(--border-color);
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-calc-main {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    /* 팝업 모달 */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: #f8f9fa;
+      width: 90%;
+      max-width: 340px;
+      padding: 15px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .modal-title {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #6c757d;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 5px;
+    }
+
+    .modal-formula {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      background: #e9ecef;
+      padding: 6px;
+      border-radius: 4px;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 8px;
+      margin-top: 5px;
+    }
+
+    .modal-btns button {
+      flex: 1;
+      padding: 6px;
+      font-size: 0.8rem;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <header>
-    <div class="title-area">
+  <div class="header">
+    <div>
       <h1>🛠 추천 절삭 조건 계산기</h1>
-      <span>버전: v1.7.2 (PWA) | 2026-08-27</span>
+      <p>버전: v1.8.0 | 최종 수정: 2026-08-29</p>
     </div>
-    <button class="btn-calc" onclick="openModal()">🧮 수식</button>
-  </header>
+    <button class="btn-mini-calc" onclick="openMiniCalc()">🧮 수식 계산기</button>
+  </div>
 
   <div class="form-group">
     <label>1. 공구 시리즈</label>
-    <select id="series-select" onchange="onSeriesChange()"></select>
+    <select id="seriesSelect" onchange="onSeriesChange()"></select>
   </div>
 
   <div class="form-group">
     <label>2. 가공 소재</label>
-    <select id="material-select" onchange="calculate()"></select>
+    <select id="materialSelect" onchange="onCalculate()"></select>
   </div>
 
   <div class="form-group">
     <label>3. 가공 방식</label>
-    <select id="machining-select" onchange="calculate()"></select>
+    <select id="machiningSelect" onchange="onCalculate()"></select>
   </div>
 
-  <div class="row-2">
-    <div class="col form-group">
-      <label id="diam-label">4. 공구 직경 (mm)</label>
-      <select id="diam-select" onchange="onDiamChange()"></select>
+  <div class="opt-grid">
+    <div class="form-group">
+      <label id="diamTitleLabel">4. 공구 직경 (mm)</label>
+      <select id="diamSelect" onchange="onDiamSelect()"></select>
     </div>
-    <div class="col form-group" id="ext-group">
-      <label id="ext-label">5. 날 수 (고정/자동)</label>
-      <select id="ext-select" disabled onchange="calculate()">
-        <option value="2">2날</option>
-        <option value="3">3날</option>
-        <option value="4" selected>4날</option>
-        <option value="6">6날</option>
+    <div class="form-group">
+      <label id="extTitleLabel">5. 날 수 (고정/자동)</label>
+      <select id="flutesSelect" disabled>
+        <option value="2날">2날</option>
+        <option value="3날">3날</option>
+        <option value="4날">4날</option>
+        <option value="6날">6날</option>
+      </select>
+      <select id="tapTypeSelect" style="display:none;" onchange="onCalculate()">
+        <option value="HSS 탭">HSS 탭</option>
+        <option value="코팅 HSS 탭">코팅 HSS 탭</option>
+        <option value="초경 탭">초경 탭</option>
       </select>
     </div>
   </div>
 
-  <div class="form-group" id="pitch-group" style="display: none;">
+  <div class="form-group" id="pitchFrame" style="display:none;">
     <label>나사 피치 (Pitch, mm)</label>
-    <input type="number" id="pitch-input" value="1.0" step="0.01" oninput="calculate()" />
+    <input type="number" id="pitchInput" value="1.0" step="0.01" oninput="onCalculate()">
   </div>
 
-  <div class="result-box">
-    <h3>추천 절삭 조건 결과</h3>
-    <div class="res-val res-rpm" id="res-rpm">회전수 (RPM) : -</div>
-    <div class="res-val res-feed" id="res-feed">이송속도 (Feed) : -</div>
-    <div class="res-sub" id="res-spec">절삭속도(Vc) : - m/min | 이송 : -</div>
-    <div class="res-note" id="res-note">절입/비고 : -</div>
+  <!-- 결과 영역 -->
+  <div class="result-card">
+    <h2>추천 절삭 조건 결과</h2>
+    <div class="res-rpm" id="rpmLabel">회전수 (RPM) : -</div>
+    <div class="res-feed" id="feedLabel">이송속도 (Feed) : -</div>
+    <div class="res-spec" id="specLabel">절삭속도(Vc) : - m/min | 이송 : -</div>
+    <div class="res-note" id="noteLabel">절입/비고 : -</div>
   </div>
 
-  <div class="gauge-box">
-    <div class="gauge-title">⚙️ 회전수 / 회전당이송 보정 게이지 (50% ~ 150%)</div>
+  <!-- 게이지 영역 (불투명 흰색 배경 #ffffff 적용) -->
+  <fieldset class="gauge-box">
+    <legend>⚙️ 회전수 / 회전당이송 보정 게이지 (50% ~ 150%)</legend>
     <div class="gauge-row">
-      <span>RPM 비율:</span>
-      <input type="range" id="rpm-gauge" min="50" max="150" value="100" oninput="applyGaugeOverride()" />
-      <span class="gauge-val" id="rpm-gauge-val" style="color:var(--primary);">100%</span>
+      <label>RPM 비율:</label>
+      <input type="range" id="rpmScale" min="50" max="150" value="100" oninput="applyGaugeOverride()">
+      <span class="gauge-val rpm" id="rpmScaleVal">100%</span>
     </div>
     <div class="gauge-row">
-      <span>Feed 보정:</span>
-      <input type="range" id="feed-gauge" min="50" max="150" value="100" oninput="applyGaugeOverride()" />
-      <span class="gauge-val" id="feed-gauge-val" style="color:var(--danger);">100%</span>
+      <label>Feed 보정:</label>
+      <input type="range" id="feedScale" min="50" max="150" value="100" oninput="applyGaugeOverride()">
+      <span class="gauge-val feed" id="feedScaleVal">100%</span>
     </div>
-    <button class="btn-reset" onclick="resetGauges()">🔄 게이지 100% 리셋</button>
-  </div>
+    <button class="btn-reset-gauge" onclick="resetGauges()">🔄 게이지 100% 리셋</button>
+  </fieldset>
 
-  <button class="btn-submit" onclick="calculate()">조건 계산 / 갱신</button>
+  <button class="btn-calc-main" onclick="onCalculate()">조건 계산 / 갱신</button>
 </div>
 
-<!-- Modal Calculator -->
-<div class="modal" id="calc-modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span>절삭 조건 수식 계산기</span>
-      <span class="close-modal" onclick="closeModal()">&times;</span>
-    </div>
-    <div class="formula-info">
-      • RPM (N) = (1000 × Vc) / (π × D)<br/>
+<!-- 미니 수식 계산기 모달 -->
+<div class="modal-overlay" id="calcModal">
+  <div class="modal">
+    <div class="modal-title">[ 주요 참고 수식 ]</div>
+    <div class="modal-formula">
+      • RPM (N) = (1000 × Vc) / (π × D)<br>
       • Feed (F) = RPM × Z × fz
     </div>
-    <div class="form-group">
-      <label>절삭 속도 (Vc)</label>
-      <input type="number" id="m-vc" placeholder="m/min" />
+    <div class="modal-grid">
+      <label>절삭 속도 (Vc):</label>
+      <input type="number" id="mcVc" placeholder="m/min">
+      <label>공구 직경 (D):</label>
+      <input type="number" id="mcD" placeholder="mm">
+      <label>날수 (Z):</label>
+      <input type="number" id="mcZ" placeholder="개">
+      <label>1날당 이송 (fz):</label>
+      <input type="number" id="mcFz" placeholder="mm/t" step="0.001">
     </div>
-    <div class="form-group">
-      <label>공구 직경 (D)</label>
-      <input type="number" id="m-d" placeholder="mm" />
+    <div style="font-size:0.85rem; display:flex; flex-direction:column; gap:2px; margin-top:4px;">
+      <div>회전수 (RPM): <b id="mcResRpm" style="color:var(--primary)">0 min-1</b></div>
+      <div>이송속도 (Feed): <b id="mcResFeed" style="color:var(--danger)">0 mm/min</b></div>
     </div>
-    <div class="form-group">
-      <label>날수 (Z)</label>
-      <input type="number" id="m-z" value="4" />
-    </div>
-    <div class="form-group">
-      <label>1날당 이송량 (fz)</label>
-      <input type="number" id="m-fz" placeholder="mm/t" step="0.001" />
-    </div>
-    <div class="result-box" style="margin: 8px 0;">
-      <div class="res-sub" id="m-rpm-res">회전수 (RPM) : 0 min-1</div>
-      <div class="res-sub" id="m-feed-res">이송속도 (Feed) : 0 mm/min</div>
-    </div>
-    <div class="row-2">
-      <button class="btn-submit" style="background:#0d6efd;" onclick="calcModalSubmit()">계산하기</button>
-      <button class="btn-reset" style="width:100%; font-size:0.9rem;" onclick="resetModal()">초기화</button>
+    <div class="modal-btns">
+      <button style="background:#e9ecef; font-weight:bold;" onclick="calcMini()">계산하기</button>
+      <button onclick="closeMiniCalc()">닫기</button>
     </div>
   </div>
 </div>
 
 <script>
 // ===========================================================================
-// DATA DEFINITIONS (19 SERIES COMPLETE)
+// DATA ENGINE
 // ===========================================================================
 const CUTTING_DATA = {
-  "ALU-CUT 2날 스퀘어 (E5D71)": {
-    materials: ["알루미늄/비철금속"],
-    diam: [1.0, 1.2, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
-    machining: {
-      "슬로팅 (Ap 0.5D / Ae 1.0D)": {ap: "0.5D", ae: "1.0D", feed_key: "slot"},
-      "사이드컷팅 (Ap 1.0D / Ae 0.25D~0.5D)": {ap: "1.0D", ae: "0.25D~0.5D", feed_key: "side"}
+    "ALU-CUT 2날 스퀘어 (E5D71)": {
+        "materials": ["알루미늄/비철금속"],
+        "diam": [1.0, 1.2, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
+        "machining": {
+            "슬로팅 (Ap 0.5D / Ae 1.0D)": {"ap": "0.5D", "ae": "1.0D", "feed_key": "slot"},
+            "사이드컷팅 (Ap 1.0D / Ae 0.25D~0.5D)": {"ap": "1.0D", "ae": "0.25D~0.5D", "feed_key": "side"},
+        },
+        "data": {
+            "알루미늄/비철금속": {
+                "rpm":  [16870, 16450, 13150, 11300, 10565, 10000, 10000, 10000, 10000, 8850, 8000, 8000, 8000, 6000, 6000, 4000, 4000],
+                "slot": [505,   510,   525,   565,   635,   700,   900,   1000,  1200,  1240, 1400, 1700, 2100, 1800, 1900, 1400, 1600],
+                "side": [845,   850,   790,   790,   845,   900,   1100,  1300,  1500,  1505, 1800, 2100, 2600, 2200, 2400, 1800, 1900]
+            }
+        }
     },
-    data: {
-      "알루미늄/비철금속": {
-        rpm:  [16870, 16450, 13150, 11300, 10565, 10000, 10000, 10000, 10000, 8850, 8000, 8000, 8000, 6000, 6000, 4000, 4000],
-        slot: [505,   510,   525,   565,   635,   700,   900,   1000,  1200,  1240, 1400, 1700, 2100, 1800, 1900, 1400, 1600],
-        side: [845,   850,   790,   790,   845,   900,   1100,  1300,  1500,  1505, 1800, 2100, 2600, 2200, 2400, 1800, 1900]
-      }
-    }
-  },
-
-  "ALU-CUT 3날 스퀘어/롱넥 (E5D70/E5E83)": {
-    materials: ["알루미늄/비철금속"],
-    diam: [1.0, 1.2, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
-    machining: {
-      "슬로팅 (Ap 0.2D / Ae 1.0D)": {ap: "0.2D", ae: "1.0D", feed_key: "slot"},
-      "사이드컷팅 (Ap 2.5D / Ae 0.15D)": {ap: "2.5D", ae: "0.15D", feed_key: "side"}
+    "ALU-CUT 3날 스퀘어/롱넥 (E5D70/E5E83)": {
+        "materials": ["알루미늄/비철금속"],
+        "diam": [1.0, 1.2, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
+        "machining": {
+            "슬로팅 (Ap 0.2D / Ae 1.0D)": {"ap": "0.2D", "ae": "1.0D", "feed_key": "slot"},
+            "사이드컷팅 (Ap 2.5D / Ae 0.15D)": {"ap": "2.5D", "ae": "0.15D", "feed_key": "side"},
+        },
+        "data": {
+            "알루미늄/비철금속": {
+                "rpm":  [17000, 16000, 13000, 10000, 8000, 7000, 7000, 7000, 7000, 7000, 7000, 7000, 6000, 5600, 5600, 5600, 5600, 4200, 4200, 2800, 2800],
+                "slot": [550,   550,   500,   400,   380,  350,  350,  441,  500,  504,  605,  606,  700,  700,  800,  854,  1050, 903,  945,  700,  805],
+                "side": [900,   850,   850,   640,   520,  455,  550,  546,  600,  651,  700,  756,  820,  861,  900,  1050, 882,  1106, 1211, 910,  956]
+            }
+        }
     },
-    data: {
-      "알루미늄/비철금속": {
-        rpm:  [17000, 16000, 13000, 10000, 8000, 7000, 7000, 7000, 7000, 7000, 7000, 7000, 6000, 5600, 5600, 5600, 5600, 4200, 4200, 2800, 2800],
-        slot: [550,   550,   500,   400,   380,  350,  350,  441,  500,  504,  605,  606,  700,  700,  800,  854,  1050, 903,  945,  700,  805],
-        side: [900,   850,   850,   640,   520,  455,  550,  546,  600,  651,  700,  756,  820,  861,  900,  1050, 882,  1106, 1211, 910,  956]
-      }
-    }
-  },
-
-  "ALU-CUT 3날 라핑 (E5D73)": {
-    materials: ["알루미늄/비철금속"],
-    diam: [4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
-    machining: {
-      "슬로팅 (Ap 1.5D / Ae 1.0D)": {ap: "1.5D", ae: "1.0D", feed_key: "slot"},
-      "사이드컷팅 (Ap 1.5D / Ae 0.5D)": {ap: "1.5D", ae: "0.5D", feed_key: "side"}
+    "ALU-CUT 3날 라핑 (E5D73)": {
+        "materials": ["알루미늄/비철금속"],
+        "diam": [4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
+        "machining": {
+            "슬로팅 (Ap 1.5D / Ae 1.0D)": {"ap": "1.5D", "ae": "1.0D", "feed_key": "slot"},
+            "사이드컷팅 (Ap 1.5D / Ae 0.5D)": {"ap": "1.5D", "ae": "0.5D", "feed_key": "side"},
+        },
+        "data": {
+            "알루미늄/비철금속": {
+                "rpm_slot": [15000, 12000, 10500, 8000, 6500, 5250, 4500, 4000, 3550, 3200],
+                "slot":     [7000,  6000,  5300,  4000, 3500, 2500, 2200, 2000, 1770, 1600],
+                "rpm_side": [20000, 16000, 13500, 10500, 8500, 6800, 5800, 5200, 4700, 4200],
+                "side":     [9000,  8000,  6800,  5300,  4300, 3400, 2900, 2600, 2350, 2100]
+            }
+        }
     },
-    data: {
-      "알루미늄/비철금속": {
-        rpm_slot: [15000, 12000, 10500, 8000, 6500, 5250, 4500, 4000, 3550, 3200],
-        slot:     [7000,  6000,  5300,  4000, 3500, 2500, 2200, 2000, 1770, 1600],
-        rpm_side: [20000, 16000, 13500, 10500, 8500, 6800, 5800, 5200, 4700, 4200],
-        side:     [9000,  8000,  6800,  5300,  4300, 3400, 2900, 2600, 2350, 2100]
-      }
-    }
-  },
-
-  "V7 PLUS 4날 스퀘어/래디우스": {
-    materials: ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "공구강 (HRC30~40)", "주철", "스테인리스강 300", "스테인리스강 400", "스테인리스강(PH)", "티타늄", "내열합금"],
-    diam: [3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 25.0],
-    machining: {
-      "사이드컷팅 (Ap 1.5D / Ae 0.5D)": {ap: "1.5D", ae: "0.5D", feed_key: "side"},
-      "슬로팅 (Ap 1.0D / Ae 1.0D)": {ap: "1.0D", ae: "1.0D", feed_key: "slot"}
+    "V7 PLUS 4날 스퀘어/래디우스": {
+        "materials": [
+            "탄소강 (~HRC30)", "합금강 (HRC30~40)", "공구강 (HRC30~40)", "주철", 
+            "스테인리스강 300", "스테인리스강 400", "스테인리스강(PH)", "티타늄", "내열합금"
+        ],
+        "diam": [3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 25.0],
+        "machining": {
+            "사이드컷팅 (Ap 1.5D / Ae 0.5D)": {"ap": "1.5D", "ae": "0.5D", "feed_key": "side"},
+            "슬로팅 (Ap 1.0D / Ae 1.0D)": {"ap": "1.0D", "ae": "1.0D", "feed_key": "slot"},
+        },
+        "data": {
+            "탄소강 (~HRC30)": {
+                "rpm": [16128, 12096, 9677, 8064, 6048, 5348, 4456, 3820, 3342, 2971, 2674, 2139],
+                "side": [323, 387, 426, 516, 653, 813, 838, 749, 709, 701, 695, 548],
+                "slot": [323, 387, 426, 516, 653, 813, 838, 749, 709, 701, 695, 548]
+            },
+            "합금강 (HRC30~40)": {
+                "rpm": [11353, 8515, 6812, 5677, 4257, 3724, 3104, 2660, 2328, 2069, 1862, 1490],
+                "side": [227, 272, 300, 363, 460, 566, 583, 521, 493, 488, 484, 381],
+                "slot": [227, 272, 300, 363, 460, 566, 583, 521, 493, 488, 484, 381]
+            },
+            "공구강 (HRC30~40)": {
+                "rpm": [6791, 5093, 4074, 3395, 2546, 2228, 1857, 1592, 1393, 1238, 1114, 891],
+                "side": [81, 122, 130, 149, 194, 241, 238, 216, 206, 203, 201, 160],
+                "slot": [81, 122, 130, 149, 194, 241, 238, 216, 206, 203, 201, 160]
+            },
+            "주철": {
+                "rpm": [11884, 8913, 7130, 5942, 4456, 3915, 3263, 2797, 2447, 2175, 1958, 1566],
+                "side": [285, 357, 399, 475, 606, 752, 757, 682, 636, 635, 634, 495],
+                "slot": [285, 357, 399, 475, 606, 752, 757, 682, 636, 635, 634, 495]
+            },
+            "스테인리스강 300": {
+                "rpm": [12202, 9151, 7321, 6101, 4576, 3661, 3050, 2615, 2288, 2034, 1830, 1464],
+                "side": [244, 293, 381, 439, 512, 703, 683, 628, 577, 569, 564, 457],
+                "slot": [244, 293, 381, 439, 512, 703, 683, 628, 577, 569, 564, 457]
+            },
+            "스테인리스강 400": {
+                "rpm": [17083, 12812, 10250, 8541, 6406, 5125, 4271, 3661, 3203, 2847, 2562, 2050],
+                "side": [273, 307, 369, 444, 564, 697, 683, 630, 577, 569, 564, 451],
+                "slot": [273, 307, 369, 444, 564, 697, 683, 630, 577, 569, 564, 451]
+            },
+            "스테인리스강(PH)": {
+                "rpm": [11035, 8276, 6621, 5517, 4138, 3310, 2759, 2365, 2069, 1839, 1655, 1324],
+                "side": [221, 265, 344, 397, 463, 636, 607, 558, 513, 508, 510, 413],
+                "slot": [221, 265, 344, 397, 463, 636, 607, 558, 513, 508, 510, 413]
+            },
+            "티타늄": {
+                "rpm": [8594, 6446, 5157, 4297, 3223, 2578, 2149, 1842, 1611, 1432, 1289, 1031],
+                "side": [138, 180, 227, 275, 322, 443, 430, 390, 361, 355, 356, 289],
+                "slot": [138, 180, 227, 275, 322, 443, 430, 390, 361, 355, 356, 289]
+            },
+            "내열합금": {
+                "rpm": [3289, 2467, 1974, 1645, 1233, 987, 822, 705, 617, 548, 493, 395],
+                "side": [66, 69, 95, 118, 153, 186, 181, 172, 158, 151, 152, 125],
+                "slot": [66, 69, 95, 118, 153, 186, 181, 172, 158, 151, 152, 125]
+            }
+        }
     },
-    data: {
-      "탄소강 (~HRC30)": { rpm: [16128, 12096, 9677, 8064, 6048, 5348, 4456, 3820, 3342, 2971, 2674, 2139], side: [323, 387, 426, 516, 653, 813, 838, 749, 709, 701, 695, 548], slot: [323, 387, 426, 516, 653, 813, 838, 749, 709, 701, 695, 548] },
-      "합금강 (HRC30~40)": { rpm: [11353, 8515, 6812, 5677, 4257, 3724, 3104, 2660, 2328, 2069, 1862, 1490], side: [227, 272, 300, 363, 460, 566, 583, 521, 493, 488, 484, 381], slot: [227, 272, 300, 363, 460, 566, 583, 521, 493, 488, 484, 381] },
-      "공구강 (HRC30~40)": { rpm: [6791, 5093, 4074, 3395, 2546, 2228, 1857, 1592, 1393, 1238, 1114, 891], side: [81, 122, 130, 149, 194, 241, 238, 216, 206, 203, 201, 160], slot: [81, 122, 130, 149, 194, 241, 238, 216, 206, 203, 201, 160] },
-      "주철": { rpm: [11884, 8913, 7130, 5942, 4456, 3915, 3263, 2797, 2447, 2175, 1958, 1566], side: [285, 357, 399, 475, 606, 752, 757, 682, 636, 635, 634, 495], slot: [285, 357, 399, 475, 606, 752, 757, 682, 636, 635, 634, 495] },
-      "스테인리스강 300": { rpm: [12202, 9151, 7321, 6101, 4576, 3661, 3050, 2615, 2288, 2034, 1830, 1464], side: [244, 293, 381, 439, 512, 703, 683, 628, 577, 569, 564, 457], slot: [244, 293, 381, 439, 512, 703, 683, 628, 577, 569, 564, 457] },
-      "스테인리스강 400": { rpm: [17083, 12812, 10250, 8541, 6406, 5125, 4271, 3661, 3203, 2847, 2562, 2050], side: [273, 307, 369, 444, 564, 697, 683, 630, 577, 569, 564, 451], slot: [273, 307, 369, 444, 564, 697, 683, 630, 577, 569, 564, 451] },
-      "스테인리스강(PH)": { rpm: [11035, 8276, 6621, 5517, 4138, 3310, 2759, 2365, 2069, 1839, 1655, 1324], side: [221, 265, 344, 397, 463, 636, 607, 558, 513, 508, 510, 413], slot: [221, 265, 344, 397, 463, 636, 607, 558, 513, 508, 510, 413] },
-      "티타늄": { rpm: [8594, 6446, 5157, 4297, 3223, 2578, 2149, 1842, 1611, 1432, 1289, 1031], side: [138, 180, 227, 275, 322, 443, 430, 390, 361, 355, 356, 289], slot: [138, 180, 227, 275, 322, 443, 430, 390, 361, 355, 356, 289] },
-      "내열합금": { rpm: [3289, 2467, 1974, 1645, 1233, 987, 822, 705, 617, 548, 493, 395], side: [66, 69, 95, 118, 153, 186, 181, 172, 158, 151, 152, 125], slot: [66, 69, 95, 118, 153, 186, 181, 172, 158, 151, 152, 125] }
-    }
-  },
-
-  "V7 PLUS 4날 볼 (GMH61)": {
-    materials: ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "공구강 (HRC30~40)", "주철", "스테인리스강 300", "스테인리스강 400", "스테인리스강(PH)", "티타늄", "내열합금"],
-    diam: [3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0, 25.0],
-    machining: { "일반 볼 가공 (Ap 1.0D / Ae 0.5D)": {ap: "1.0D", ae: "0.5D", feed_key: "norm"} },
-    data: {
-      "탄소강 (~HRC30)": { rpm: [17189, 12892, 10313, 8594, 6446, 5157, 4297, 3223, 2865, 2578, 2063], norm: [1719, 1392, 1238, 1375, 1547, 1341, 1203, 967, 917, 928, 817] },
-      "합금강 (HRC30~40)": { rpm: [11990, 8992, 7194, 5995, 4496, 3597, 2997, 2248, 1998, 1798, 1439], norm: [1199, 971, 863, 959, 1079, 935, 839, 665, 631, 647, 570] },
-      "공구강 (HRC30~40)": { rpm: [7215, 5411, 4329, 3608, 2706, 2165, 1804, 1353, 1203, 1082, 866], norm: [491, 411, 364, 404, 455, 390, 354, 281, 269, 273, 242] },
-      "주철": { rpm: [12626, 9470, 7576, 6313, 4735, 3788, 3157, 2367, 2104, 1894, 1515], norm: [1566, 1250, 1121, 1263, 1402, 1227, 1098, 881, 833, 848, 752] },
-      "스테인리스강 300": { rpm: [9019, 6764, 5411, 4509, 3382, 2706, 2255, 1691, 1503, 1353, 1082], norm: [722, 541, 541, 740, 609, 541, 496, 406, 385, 352, 294] },
-      "스테인리스강 400": { rpm: [8170, 6127, 4902, 4085, 3064, 2451, 2042, 1532, 1362, 1225, 980], norm: [490, 368, 490, 490, 490, 441, 408, 331, 321, 284, 231] },
-      "스테인리스강(PH)": { rpm: [8170, 6127, 4902, 4085, 3064, 2451, 2042, 1532, 1362, 1225, 980], norm: [654, 490, 490, 670, 551, 490, 449, 368, 349, 319, 267] },
-      "티타늄": { rpm: [4987, 3740, 2992, 2493, 1870, 1496, 1247, 935, 831, 748, 598], norm: [359, 269, 263, 369, 299, 269, 244, 202, 193, 174, 146] },
-      "내열합금": { rpm: [2228, 1671, 1337, 1114, 836, 668, 557, 418, 371, 334, 267], norm: [125, 94, 91, 125, 104, 94, 85, 70, 67, 60, 51] }
-    }
-  },
-
-  "V7 PLUS 6날 스퀘어/래디우스": {
-    materials: ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "공구강 (HRC30~40)", "주철", "스테인리스강 300", "스테인리스강 400", "스테인리스강(PH)", "티타늄", "내열합금"],
-    diam: [6.0, 8.0, 10.0, 12.0, 16.0, 20.0, 25.0],
-    machining: { "사이드컷팅 (Ap 2.0D / Ae 0.05D)": {ap: "2.0D", ae: "0.05D", feed_key: "side"} },
-    data: {
-      "탄소강 (~HRC30)": { rpm: [15915, 11937, 9549, 7958, 5968, 4775, 3820], side: [6494, 8308, 8251, 8260, 7234, 6446, 5317] },
-      "합금강 (HRC30~40)": { rpm: [10876, 8157, 6525, 5438, 4078, 3263, 2610], side: [3263, 4160, 4150, 4176, 3646, 3269, 2725] },
-      "공구강 (HRC30~40)": { rpm: [5305, 3979, 3183, 2653, 1989, 1592, 1273], side: [1305, 1695, 1681, 1671, 1468, 1308, 1100] },
-      "주철": { rpm: [11937, 8952, 7162, 5968, 4476, 3581, 2865], side: [5844, 7477, 7426, 7434, 6510, 5801, 4785] },
-      "스테인리스강 300": { rpm: [7692, 5769, 4615, 3846, 2885, 2308, 1846], side: [1892, 2458, 2437, 2423, 2129, 1897, 1584] },
-      "스테인리스강 400": { rpm: [11406, 8555, 6844, 5703, 4277, 3422, 2737], side: [3353, 4312, 4270, 4277, 3747, 3326, 2759] },
-      "스테인리스강(PH)": { rpm: [7162, 5371, 4297, 3581, 2686, 2149, 1719], side: [1762, 2288, 2269, 2256, 1982, 1766, 1464] },
-      "티타늄": { rpm: [6101, 4576, 3661, 3050, 2288, 1830, 1464], side: [1208, 1510, 1537, 1519, 1332, 1241, 1028] },
-      "내열합금": { rpm: [1857, 1393, 1114, 928, 696, 557, 446], side: [368, 460, 468, 457, 405, 374, 307] }
-    }
-  },
-
-  "X-POWER S 2날 볼 (SEM813)": {
-    materials: ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "고경도강 (HRC45~65)"],
-    diam: [1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0],
-    machining: {
-      "일반가공 (Ap 0.1D~0.2D / Ae 0.2D~0.3D)": {ap: "0.1D~0.2D", ae: "0.2D~0.3D", feed_key: "norm"},
-      "고속가공 (Ap 0.05D / Ae 0.2D~0.3D)": {ap: "0.05D", ae: "0.2D~0.3D", feed_key: "hsc"}
+    "V7 PLUS 4날 볼 (GMH61)": {
+        "materials": ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "공구강 (HRC30~40)", "주철", "스테인리스강 300", "스테인리스강 400", "스테인리스강(PH)", "티타늄", "내열합금"],
+        "diam": [3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0, 25.0],
+        "machining": {"일반 볼 가공 (Ap 1.0D / Ae 0.5D)": {"ap": "1.0D", "ae": "0.5D", "feed_key": "norm"}},
+        "data": {
+            "탄소강 (~HRC30)": {"rpm": [17189, 12892, 10313, 8594, 6446, 5157, 4297, 3223, 2865, 2578, 2063], "norm": [1719, 1392, 1238, 1375, 1547, 1341, 1203, 967, 917, 928, 817]},
+            "합금강 (HRC30~40)": {"rpm": [11990, 8992, 7194, 5995, 4496, 3597, 2997, 2248, 1998, 1798, 1439], "norm": [1199, 971, 863, 959, 1079, 935, 839, 665, 631, 647, 570]},
+            "공구강 (HRC30~40)": {"rpm": [7215, 5411, 4329, 3608, 2706, 2165, 1804, 1353, 1203, 1082, 866], "norm": [491, 411, 364, 404, 455, 390, 354, 281, 269, 273, 242]},
+            "주철": {"rpm": [12626, 9470, 7576, 6313, 4735, 3788, 3157, 2367, 2104, 1894, 1515], "norm": [1566, 1250, 1121, 1263, 1402, 1227, 1098, 881, 833, 848, 752]},
+            "스테인리스강 300": {"rpm": [9019, 6764, 5411, 4509, 3382, 2706, 2255, 1691, 1503, 1353, 1082], "norm": [722, 541, 541, 740, 609, 541, 496, 406, 385, 352, 294]},
+            "스테인리스강 400": {"rpm": [8170, 6127, 4902, 4085, 3064, 2451, 2042, 1532, 1362, 1225, 980], "norm": [490, 368, 490, 490, 490, 441, 408, 331, 321, 284, 231]},
+            "스테인리스강(PH)": {"rpm": [8170, 6127, 4902, 4085, 3064, 2451, 2042, 1532, 1362, 1225, 980], "norm": [654, 490, 490, 670, 551, 490, 449, 368, 349, 319, 267]},
+            "티타늄": {"rpm": [4987, 3740, 2992, 2493, 1870, 1496, 1247, 935, 831, 748, 598], "norm": [359, 269, 263, 369, 299, 269, 244, 202, 193, 174, 146]},
+            "내열합금": {"rpm": [2228, 1671, 1337, 1114, 836, 668, 557, 418, 371, 334, 267], "norm": [125, 94, 91, 125, 104, 94, 85, 70, 67, 60, 51]}
+        }
     },
-    data: {
-      "탄소강 (~HRC30)": {
-        rpm_norm: [15760, 15760, 14400, 14400, 13100, 10500, 9140, 7780, 5260, 4620, 3780, 2740, 2100],
-        norm:     [250,   350,   750,   750,   680,   740,   820,  840,  950,  1020, 900,  920,  840],
-        rpm_hsc:  [25000, 23000, 21000, 21000, 21000, 21000, 21000, 21000, 15760, 13660, 10500, 8200, 6300],
-        hsc:      [650,   700,   740,   880,   1000,  1470,  1800,  2310,  2840,  3050,  2630,  2630, 2520]
-      },
-      "합금강 (HRC30~40)": {
-        rpm_norm: [12720, 12140, 10700, 10700, 10000, 8400, 7300, 6300, 4420, 3780, 2940, 2320, 1900],
-        norm:     [200,   270,   490,   490,   460,   530,  580,  630,  660,  710,  660,  650,  630],
-        rpm_hsc:  [25000, 23000, 21000, 19000, 17000, 13660, 12000, 10500, 7880, 6300, 5260, 3780, 2940],
-        hsc:      [400,   430,   470,   490,   520,   580,   600,   630,   740,   840,   840,   710,  530]
-      },
-      "고경도강 (HRC45~65)": {
-        rpm_norm: [5800, 5320, 4680, 4680, 4520, 4200, 3680, 3160, 2100, 1780, 1360, 1160, 840],
-        norm:     [90,   120,  150,  150,  150,  180,  180,  190,  190,  190,  190,  190,  190],
-        rpm_hsc:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        hsc:      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-      }
-    }
-  },
-
-  "X-POWER S 2날 스퀘어/롱넥 (SEM801/SEM802)": {
-    materials: ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "고경도강 (HRC45~55)"],
-    diam: [1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0],
-    machining: {
-      "슬로팅 (Ap 0.5D / Ae 1.0D)": {ap: "0.5D", ae: "1.0D", feed_key: "slot"},
-      "사이드컷팅 (Ap 1.0D / Ae 0.25D)": {ap: "1.0D", ae: "0.25D", feed_key: "side"}
+    "V7 PLUS 6날 스퀘어/래디우스": {
+        "materials": ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "공구강 (HRC30~40)", "주철", "스테인리스강 300", "스테인리스강 400", "스테인리스강(PH)", "티타늄", "내열합금"],
+        "diam": [6.0, 8.0, 10.0, 12.0, 16.0, 20.0, 25.0],
+        "machining": {"사이드컷팅 (Ap 2.0D / Ae 0.05D)": {"ap": "2.0D", "ae": "0.05D", "feed_key": "side"}},
+        "data": {
+            "탄소강 (~HRC30)": {"rpm": [15915, 11937, 9549, 7958, 5968, 4775, 3820], "side": [6494, 8308, 8251, 8260, 7234, 6446, 5317]},
+            "합금강 (HRC30~40)": {"rpm": [10876, 8157, 6525, 5438, 4078, 3263, 2610], "side": [3263, 4160, 4150, 4176, 3646, 3269, 2725]},
+            "공구강 (HRC30~40)": {"rpm": [5305, 3979, 3183, 2653, 1989, 1592, 1273], "side": [1305, 1695, 1681, 1671, 1468, 1308, 1100]},
+            "주철": {"rpm": [11937, 8952, 7162, 5968, 4476, 3581, 2865], "side": [5844, 7477, 7426, 7434, 6510, 5801, 4785]},
+            "스테인리스강 300": {"rpm": [7692, 5769, 4615, 3846, 2885, 2308, 1846], "side": [1892, 2458, 2437, 2423, 2129, 1897, 1584]},
+            "스테인리스강 400": {"rpm": [11406, 8555, 6844, 5703, 4277, 3422, 2737], "side": [3353, 4312, 4270, 4277, 3747, 3326, 2759]},
+            "스테인리스강(PH)": {"rpm": [7162, 5371, 4297, 3581, 2686, 2149, 1719], "side": [1762, 2288, 2269, 2256, 1982, 1766, 1464]},
+            "티타늄": {"rpm": [6101, 4576, 3661, 3050, 2288, 1830, 1464], "side": [1208, 1510, 1537, 1519, 1332, 1241, 1028]},
+            "내열합금": {"rpm": [1857, 1393, 1114, 928, 696, 557, 446], "side": [368, 460, 468, 457, 405, 374, 307]}
+        }
     },
-    data: {
-      "탄소강 (~HRC30)": {
-        rpm:  [15760, 15760, 14400, 14400, 13100, 10500, 9140, 7780, 5260, 4620, 3780, 2740, 2100],
-        slot: [180,   220,   400,   450,   480,   550,   600,   650,   750,   800,   750,   700,   600],
-        side: [280,   320,   550,   600,   650,   750,   820,   900,   1050,  1150,  1050,  950,   850]
-      },
-      "합금강 (HRC30~40)": {
-        rpm:  [12720, 12140, 10700, 10700, 10000, 8400, 7300, 6300, 4420, 3780, 2940, 2320, 1900],
-        slot: [140,   170,   300,   330,   360,   410,   450,   480,   550,   600,   550,   500,   440],
-        side: [210,   250,   420,   460,   500,   570,   630,   680,   780,   850,   780,   700,   620]
-      },
-      "고경도강 (HRC45~55)": {
-        rpm:  [5800,  5320,  4680,  4680,  4520,  4200,  3680,  3160,  2100,  1780,  1360,  1160,  840],
-        slot: [60,    80,    120,   130,   140,   160,   170,   180,   200,   210,   190,   170,   150],
-        side: [90,    120,   170,   180,   200,   230,   240,   260,   290,   300,   270,   240,   210]
-      }
-    }
-  },
-
-  "X-POWER S 4날 스퀘어/래디우스 (SEM812/SEM850)": {
-    materials: ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "고경도강 (HRC45~55)"],
-    diam: [2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
-    machining: {
-      "사이드컷팅 (Ap 1.5D / Ae 0.1D~0.2D)": {ap: "1.5D", ae: "0.1D~0.2D", feed_key: "side"},
-      "슬로팅 (Ap 0.5D / Ae 1.0D)": {ap: "0.5D", ae: "1.0D", feed_key: "slot"}
+    "X-POWER S 2날 볼 (SEM813)": {
+        "materials": ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "고경도강 (HRC45~65)"],
+        "diam": [1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0],
+        "machining": {
+            "일반가공 (Ap 0.1D~0.2D / Ae 0.2D~0.3D)": {"ap": "0.1D~0.2D", "ae": "0.2D~0.3D", "feed_key": "norm"},
+            "고속가공 (Ap 0.05D / Ae 0.2D~0.3D)": {"ap": "0.05D", "ae": "0.2D~0.3D", "feed_key": "hsc"}
+        },
+        "data": {
+            "탄소강 (~HRC30)": {
+                "rpm_norm": [15760, 15760, 14400, 14400, 13100, 10500, 9140, 7780, 5260, 4620, 3780, 2740, 2100],
+                "norm":     [250,   350,   750,   750,   680,   740,   820,  840,  950,  1020, 900,  920,  840],
+                "rpm_hsc":  [25000, 23000, 21000, 21000, 21000, 21000, 21000, 21000, 15760, 13660, 10500, 8200, 6300],
+                "hsc":      [650,   700,   740,   880,   1000,  1470,  1800,  2310,  2840,  3050,  2630,  2630, 2520]
+            },
+            "합금강 (HRC30~40)": {
+                "rpm_norm": [12720, 12140, 10700, 10700, 10000, 8400, 7300, 6300, 4420, 3780, 2940, 2320, 1900],
+                "norm":     [200,   270,   490,   490,   460,   530,  580,  630,  660,  710,  660,  650,  630],
+                "rpm_hsc":  [25000, 23000, 21000, 19000, 17000, 13660, 12000, 10500, 7880, 6300, 5260, 3780, 2940],
+                "hsc":      [400,   430,   470,   490,   520,   580,   600,   630,   740,   840,   840,   710,  530]
+            },
+            "고경도강 (HRC45~65)": {
+                "rpm_norm": [5800, 5320, 4680, 4680, 4520, 4200, 3680, 3160, 2100, 1780, 1360, 1160, 840],
+                "norm":     [90,   120,  150,  150,  150,  180,  180,  190,  190,  190,  190,  190,  190],
+                "rpm_hsc":  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                "hsc":      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            }
+        }
     },
-    data: {
-      "탄소강 (~HRC30)": {
-        rpm:  [15760, 14400, 13100, 10500, 9140, 7780, 5260, 4620, 3780, 3200, 2740, 2400, 2100],
-        side: [800,   880,   950,   1100,  1250,  1400,  1600,  1750,  1650,  1500,  1400,  1300,  1200],
-        slot: [550,   600,   650,   750,   850,   950,   1100,  1200,  1100,  1000,  950,   880,   800]
-      },
-      "합금강 (HRC30~40)": {
-        rpm:  [11000, 10000, 9000,  7500,  6500,  5500,  3800,  3300,  2700,  2300,  2000,  1800,  1500],
-        side: [580,   630,   680,   780,   880,   1000,  1150,  1250,  1180,  1080,  1000,  920,   850],
-        slot: [380,   420,   450,   520,   600,   680,   780,   850,   800,   730,   680,   620,   570]
-      },
-      "고경도강 (HRC45~55)": {
-        rpm:  [5000,  4500,  4000,  3300,  2800,  2400,  1700,  1400,  1100,  950,   820,   720,   630],
-        side: [220,   240,   260,   300,   340,   380,   440,   480,   450,   410,   380,   350,   320],
-        slot: [150,   160,   170,   200,   230,   260,   300,   320,   300,   270,   250,   230,   210]
-      }
-    }
-  },
-
-  "X-POWER S 3~5날 라핑/챔퍼 (SEM814)": {
-    materials: ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "고경도강 (HRC45~55)"],
-    diam: [3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 16.0, 18.0, 20.0, 25.0],
-    machining: {
-      "라핑 사이드컷팅 (Ap 1.5D / Ae 0.25D)": {ap: "1.5D", ae: "0.25D", feed_key: "side"},
-      "챔퍼ing / 면취 가공": {ap: "챔퍼량", ae: "50%", feed_key: "side"}
+    "X-POWER S 2날 스퀘어/롱넥 (SEM801/SEM802)": {
+        "materials": ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "고경도강 (HRC45~55)"],
+        "diam": [1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0],
+        "machining": {
+            "슬로팅 (Ap 0.5D / Ae 1.0D)": {"ap": "0.5D", "ae": "1.0D", "feed_key": "slot"},
+            "사이드컷팅 (Ap 1.0D / Ae 0.25D)": {"ap": "1.0D", "ae": "0.25D", "feed_key": "side"}
+        },
+        "data": {
+            "탄소강 (~HRC30)": {
+                "rpm":  [15760, 15760, 14400, 14400, 13100, 10500, 9140, 7780, 5260, 4620, 3780, 2740, 2100],
+                "slot": [180,   220,   400,   450,   480,   550,   600,   650,   750,   800,   750,   700,   600],
+                "side": [280,   320,   550,   600,   650,   750,   820,   900,   1050,  1150,  1050,  950,   850]
+            },
+            "합금강 (HRC30~40)": {
+                "rpm":  [12720, 12140, 10700, 10700, 10000, 8400, 7300, 6300, 4420, 3780, 2940, 2320, 1900],
+                "slot": [140,   170,   300,   330,   360,   410,   450,   480,   550,   600,   550,   500,   440],
+                "side": [210,   250,   420,   460,   500,   570,   630,   680,   780,   850,   780,   700,   620]
+            },
+            "고경도강 (HRC45~55)": {
+                "rpm":  [5800,  5320,  4680,  4680,  4520,  4200,  3680,  3160,  2100,  1780,  1360,  1160,  840],
+                "slot": [60,    80,    120,   130,   140,   160,   170,   180,   200,   210,   190,   170,   150],
+                "side": [90,    120,   170,   180,   200,   230,   240,   260,   290,   300,   270,   240,   210]
+            }
+        }
     },
-    data: {
-      "탄소강 (~HRC30)": {
-        rpm:  [13100, 10500, 9140, 7780, 6800, 5260, 4800, 4620, 4100, 3780, 3400, 3200, 2740, 2400, 2100, 1600],
-        side: [780,   920,   1050,  1200,  1250,  1400,  1450,  1550,  1500,  1450,  1400,  1350,  1250,  1150,  1050,  900]
-      },
-      "합금강 (HRC30~40)": {
-        rpm:  [9500,  7800,  6800,  5800,  5000,  4000,  3600,  3400,  3000,  2800,  2500,  2300,  1900,  1700,  1500,  1100],
-        side: [520,   620,   700,   800,   840,   940,   980,   1050,  1000,  980,   940,   900,   840,   780,   700,   600]
-      },
-      "고경도강 (HRC45~55)": {
-        rpm:  [4200,  3500,  3000,  2500,  2200,  1800,  1600,  1500,  1300,  1200,  1100,  1000,  850,   750,   650,   500],
-        side: [200,   240,   270,   310,   320,   360,   380,   400,   380,   370,   350,   340,   320,   290,   260,   220]
-      }
+    "X-POWER S 4날 스퀘어/래디우스 (SEM812/SEM850)": {
+        "materials": ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "고경도강 (HRC45~55)"],
+        "diam": [2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
+        "machining": {
+            "사이드컷팅 (Ap 1.5D / Ae 0.1D~0.2D)": {"ap": "1.5D", "ae": "0.1D~0.2D", "feed_key": "side"},
+            "슬로팅 (Ap 0.5D / Ae 1.0D)": {"ap": "0.5D", "ae": "1.0D", "feed_key": "slot"}
+        },
+        "data": {
+            "탄소강 (~HRC30)": {
+                "rpm":  [15760, 14400, 13100, 10500, 9140, 7780, 5260, 4620, 3780, 3200, 2740, 2400, 2100],
+                "side": [800,   880,   950,   1100,  1250,  1400,  1600,  1750,  1650,  1500,  1400,  1300,  1200],
+                "slot": [550,   600,   650,   750,   850,   950,   1100,  1200,  1100,  1000,  950,   880,   800]
+            },
+            "합금강 (HRC30~40)": {
+                "rpm":  [11000, 10000, 9000,  7500,  6500,  5500,  3800,  3300,  2700,  2300,  2000,  1800,  1500],
+                "side": [580,   630,   680,   780,   880,   1000,  1150,  1250,  1180,  1080,  1000,  920,   850],
+                "slot": [380,   420,   450,   520,   600,   680,   780,   850,   800,   730,   680,   620,   570]
+            },
+            "고경도강 (HRC45~55)": {
+                "rpm":  [5000,  4500,  4000,  3300,  2800,  2400,  1700,  1400,  1100,  950,   820,   720,   630],
+                "side": [220,   240,   260,   300,   340,   380,   440,   480,   450,   410,   380,   350,   320],
+                "slot": [150,   160,   170,   200,   230,   260,   300,   320,   300,   270,   250,   230,   210]
+            }
+        }
+    },
+    "X-POWER S 3~5날 라핑/챔퍼 (SEM814)": {
+        "materials": ["탄소강 (~HRC30)", "합금강 (HRC30~40)", "고경도강 (HRC45~55)"],
+        "diam": [3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 16.0, 18.0, 20.0, 25.0],
+        "machining": {
+            "라핑 사이드컷팅 (Ap 1.5D / Ae 0.25D)": {"ap": "1.5D", "ae": "0.25D", "feed_key": "side"},
+            "챔퍼ing / 면취 가공": {"ap": "챔퍼량", "ae": "50%", "feed_key": "side"}
+        },
+        "data": {
+            "탄소강 (~HRC30)": {
+                "rpm":  [13100, 10500, 9140, 7780, 6800, 5260, 4800, 4620, 4100, 3780, 3400, 3200, 2740, 2400, 2100, 1600],
+                "side": [780,   920,   1050,  1200,  1250,  1400,  1450,  1550,  1500,  1450,  1400,  1350,  1250,  1150,  1050,  900]
+            },
+            "합금강 (HRC30~40)": {
+                "rpm":  [9500,  7800,  6800,  5800,  5000,  4000,  3600,  3400,  3000,  2800,  2500,  2300,  1900,  1700,  1500,  1100],
+                "side": [520,   620,   700,   800,   840,   940,   980,   1050,  1000,  980,   940,   900,   840,   780,   700,   600]
+            },
+            "고경도강 (HRC45~55)": {
+                "rpm":  [4200,  3500,  3000,  2500,  2200,  1800,  1600,  1500,  1300,  1200,  1100,  1000,  850,   750,   650,   500],
+                "side": [200,   240,   270,   310,   320,   360,   380,   400,   380,   370,   350,   340,   320,   290,   260,   220]
+            }
+        }
+    },
+    "SUS-CUT 4날 볼 (EMD88)": {
+        "materials": ["합금강 (~HRC20)", "스테인리스강 300/400 (M계열)"],
+        "diam": [3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0],
+        "machining": {"볼 가공 (Ap 1.0D / Ae 0.5D)": {"ap": "1.0D", "ae": "0.5D", "feed_key": "norm"}},
+        "data": {
+            "합금강 (~HRC20)": {"rpm": [13500, 10100, 8090, 6750, 5050, 4050, 3370, 2530, 2030], "norm": [275, 370, 410, 480, 620, 780, 750, 700, 680]},
+            "스테인리스강 300/400 (M계열)": {"rpm": [6690, 5050, 4050, 3350, 2500, 2050, 1680, 1250, 1000], "norm": [105, 135, 165, 190, 250, 320, 310, 265, 260]}
+        }
+    },
+    "SUS-CUT 4날 래디우스 (EMD83)": {
+        "materials": ["합금강 (~HRC20)", "스테인리스강 300", "스테인리스강 400"],
+        "diam": [1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
+        "machining": {"사이드/슬로팅 (Ap 1.0D / Ae 1.0D)": {"ap": "1.0D", "ae": "1.0D", "feed_key": "norm"}},
+        "data": {
+            "합금강 (~HRC20)": {"rpm": [40500, 27000, 20300, 16200, 13500, 10100, 8090, 6750, 5050, 4050, 3370, 2890, 2500, 2250, 2000], "norm": [300, 300, 300, 300, 275, 370, 410, 480, 620, 780, 750, 670, 630, 620, 630]},
+            "스테인리스강 300": {"rpm": [20000, 13000, 10000, 8000, 6690, 5050, 4050, 3350, 2500, 2050, 1680, 1400, 1250, 1100, 1000], "norm": [250, 180, 150, 120, 105, 135, 165, 190, 250, 320, 310, 280, 265, 260, 260]},
+            "스테인리스강 400": {"rpm": [28000, 18500, 14000, 11000, 9350, 7000, 5600, 4700, 3500, 2800, 2350, 2000, 1750, 1550, 1400], "norm": [160, 160, 160, 165, 145, 185, 230, 265, 340, 430, 435, 405, 370, 365, 365]}
+        }
+    },
+    "SUS-CUT 2날 스퀘어 (EMD81)": {
+        "materials": ["탄소강/합금강 (~HRC30)", "탄소강/합금강 (HRC30~40)", "스테인리스강 300"],
+        "diam": [1.0, 1.2, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
+        "machining": {"슬로팅/사이드 (Ap 0.2D~0.5D / Ae 1.0D)": {"ap": "0.2D~0.5D", "ae": "1.0D", "feed_key": "norm"}},
+        "data": {
+            "탄소강/합금강 (~HRC30)": {"rpm": [13000, 12500, 12000, 11560, 10240, 8920, 7560, 6300, 5560, 4200, 3260, 2740, 2470, 2200, 1940, 1750], "norm": [220, 210, 200, 190, 200, 210, 300, 320, 350, 380, 330, 280, 250, 220, 195, 170]},
+            "탄소강/합금강 (HRC30~40)": {"rpm": [9800, 9000, 8300, 7560, 6560, 5560, 4620, 3780, 3360, 2520, 2000, 1680, 1520, 1360, 1210, 1060], "norm": [160, 150, 140, 120, 130, 140, 180, 190, 220, 200, 160, 130, 120, 110, 95, 80]},
+            "스테인리스강 300": {"rpm": [21000, 17500, 14000, 10500, 8500, 8000, 7500, 6000, 5000, 3750, 3000, 2500, 2150, 1880, 1670, 1500], "norm": [170, 140, 110, 85, 70, 65, 75, 80, 80, 90, 90, 95, 100, 105, 110, 115]}
+        }
+    },
+    "SUS-CUT 3날 스퀘어 (EHD84)": {
+        "materials": ["합금강 (~HRC20)"],
+        "diam": [1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
+        "machining": {"슬로팅 가공 (Ap 0.5D / Ae 1.0D)": {"ap": "0.5D", "ae": "1.0D", "feed_key": "norm"}},
+        "data": {
+            "합금강 (~HRC20)": {"rpm": [30000, 20000, 15000, 12000, 10080, 7550, 6000, 5000, 3750, 3000, 2500, 2150, 1880, 1670, 1500], "norm": [990, 1020, 990, 1008, 937, 1404, 1494, 1635, 1698, 1620, 1500, 1548, 1624, 1668, 1701]}
+        }
+    },
+    "SUS-CUT 5날 TN라핑 (EHD87)": {
+        "materials": ["합금강 (~HRC20)"],
+        "diam": [6.0, 8.0, 10.0, 12.0, 16.0, 20.0],
+        "machining": {"라핑 사이드컷팅 (Ap 1.5D / Ae 0.5D)": {"ap": "1.5D", "ae": "0.5D", "feed_key": "side"}},
+        "data": {
+            "합금강 (~HRC20)": {"rpm": [6750, 5050, 4050, 3370, 2530, 2030], "side": [607, 808, 972, 943, 872, 852]}
+        }
+    },
+    "YG-1 골드피 드릴 (D1GP123)": {
+        "is_d1gp123": true,
+        "materials": [
+            "P - 저탄소강 (~0.15%C) [HB125]", "P - 중탄소강 (~0.45%C) [HB190]", "P - 고탄소강 (~0.45%C) [HB250]",
+            "P - 고탄소강 (~0.75%C) [HB270]", "P - 저합금강 [HB180]", "P - 저합금강 [HB275]", "P - 저합금강 [HB300]",
+            "P - 고합금강 및 공구강 [HB200]", "M - 페라이트/마르텐사이트계 [HB200] (STS 430, STS 410 등)",
+            "M - 마르텐사이트계 [HB240] (STS 420, STS 440C 등)", "M - 오스테나이트계 [HB180] (STS 304, STS 316 등)",
+            "K - 회주철 (펄라이트/페라이트) [HB180]", "K - 회주철 (펄라이트) [HB260]", "K - 구상흑연주철 (페라이트) [HB160]",
+            "K - 구상흑연주철 (펄라이트) [HB250]", "K - 가단주철 (페라이트) [HB130]", "K - 가단주철 (펄라이트) [HB230]",
+            "N - 알루미늄-단조 합금 [HB60]", "N - 알루미늄-단조 합금 [HB100]", "N - 알루미늄-주조 합금 (Si<=12%) [HB75]",
+            "N - 비철금속", "S - 순수 티타늄 / 티타늄 합금 [400Rm]"
+        ],
+        "diam": [2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0],
+        "machining": {"일반 홀 가공 (Drilling)": {"ap": "3D/5D", "ae": "1.0D"}},
+        "diams_ref": [2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 13.0],
+        "data": {
+            "P - 저탄소강 (~0.15%C) [HB125]": {"vc": 40.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "P - 중탄소강 (~0.45%C) [HB190]": {"vc": 35.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "P - 고탄소강 (~0.45%C) [HB250]": {"vc": 30.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "P - 고탄소강 (~0.75%C) [HB270]": {"vc": 20.0, "feeds": [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
+            "P - 저합금강 [HB180]": {"vc": 35.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "P - 저합금강 [HB275]": {"vc": 30.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "P - 저합금강 [HB300]": {"vc": 30.0, "feeds": [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
+            "P - 고합금강 및 공구강 [HB200]": {"vc": 20.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "M - 페라이트/마르텐사이트계 [HB200] (STS 430, STS 410 등)": {"vc": 25.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "M - 마르텐사이트계 [HB240] (STS 420, STS 440C 등)": {"vc": 20.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "M - 오스테나이트계 [HB180] (STS 304, STS 316 등)": {"vc": 15.0, "feeds": [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
+            "K - 회주철 (펄라이트/페라이트) [HB180]": {"vc": 40.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "K - 회주철 (펄라이트) [HB260]": {"vc": 35.0, "feeds": [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
+            "K - 구상흑연주철 (페라이트) [HB160]": {"vc": 40.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "K - 구상흑연주철 (펄라이트) [HB250]": {"vc": 30.0, "feeds": [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
+            "K - 가단주철 (페라이트) [HB130]": {"vc": 35.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "K - 가단주철 (펄라이트) [HB230]": {"vc": 30.0, "feeds": [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
+            "N - 알루미늄-단조 합금 [HB60]": {"vc": 65.0, "feeds": [[0.05,0.09], [0.07,0.11], [0.12,0.16], [0.12,0.18], [0.14,0.20], [0.16,0.22], [0.22,0.28]]},
+            "N - 알루미늄-단조 합금 [HB100]": {"vc": 65.0, "feeds": [[0.05,0.09], [0.07,0.11], [0.12,0.16], [0.12,0.18], [0.14,0.20], [0.16,0.22], [0.22,0.28]]},
+            "N - 알루미늄-주조 합금 (Si<=12%) [HB75]": {"vc": 50.0, "feeds": [[0.05,0.09], [0.07,0.11], [0.12,0.16], [0.12,0.18], [0.14,0.20], [0.16,0.22], [0.22,0.28]]},
+            "N - 비철금속": {"vc": 30.0, "feeds": [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
+            "S - 순수 티타늄 / 티타늄 합금 [400Rm]": {"vc": 20.0, "feeds": [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.05,0.09], [0.06,0.10], [0.07,0.13], [0.08,0.14]]}
+        }
+    },
+    "NACHI 코발트 드릴 (CO-SD)": {
+        "is_drill": true,
+        "materials": ["탄소강", "합금강", "공구강/고탄소강", "스테인리스강 300", "주철", "알루미늄 합금"],
+        "diam": [2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0],
+        "machining": {"일반 홀 가공": {"ap": "3D/5D", "ae": "1.0D"}},
+        "data": {
+            "탄소강": {"rpm": [3180, 2120, 1590, 1270, 1060, 800, 640, 530, 400], "s": [0.05, 0.08, 0.11, 0.14, 0.16, 0.20, 0.24, 0.27, 0.32]},
+            "합금강": {"rpm": [2390, 1590, 1190, 950, 800, 600, 480, 400, 300], "s": [0.04, 0.07, 0.09, 0.12, 0.14, 0.17, 0.21, 0.24, 0.28]},
+            "공구강/고탄소강": {"rpm": [2230, 1490, 1115, 890, 740, 560, 445, 370, 280], "s": [0.04, 0.06, 0.08, 0.10, 0.12, 0.15, 0.18, 0.21, 0.25]},
+            "스테인리스강 300": {"rpm": [1910, 1270, 950, 760, 640, 480, 380, 320, 240], "s": [0.03, 0.05, 0.07, 0.09, 0.11, 0.14, 0.17, 0.20, 0.23]},
+            "주철": {"rpm": [3980, 2650, 1990, 1590, 1330, 1000, 800, 660, 500], "s": [0.06, 0.10, 0.13, 0.17, 0.19, 0.24, 0.29, 0.32, 0.38]},
+            "알루미늄 합금": {"rpm": [6370, 4240, 3180, 2550, 2120, 1590, 1270, 1060, 800], "s": [0.06, 0.10, 0.14, 0.18, 0.20, 0.25, 0.30, 0.33, 0.38]}
+        }
+    },
+    "HSS 홀가공 (C'B / 카운터보어)": {
+        "is_cb": true,
+        "materials": ["탄소강", "합금강", "스테인리스강 300", "알루미늄/비철", "주철"],
+        "diam": [3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
+        "machining": {"수직 카운터보어 가공": {"ap": "수직 피드 (Plunge)", "ae": "1.0D"}},
+        "cb_map": {
+            "탄소강": {"vc": 18.0, "fz": 0.025, "note": "절삭유 필수 적용"},
+            "합금강": {"vc": 14.0, "fz": 0.020, "note": "스텝 피드 권장"},
+            "스테인리스강 300": {"vc": 10.0, "fz": 0.015, "note": "저속/저진입, 절삭유 충분히 공급"},
+            "알루미늄/비철": {"vc": 35.0, "fz": 0.040, "note": "칩 포켓 배출 유의"},
+            "주철": {"vc": 20.0, "fz": 0.030, "note": "건식 가공 가능 / 에어블로우"}
+        }
+    },
+    "탭 가공 (절삭탭/스파이럴/포인트)": {
+        "is_tap": true,
+        "materials": ["탄소강", "합금강", "스테인리스강 300", "알루미늄/비철", "주철"],
+        "machining": {"나사산 탭핑 가공": {"ap": "나사 피치 비례", "ae": "100%"}},
+        "vc_map": {
+            "탄소강": {"HSS 탭": 10.0, "코팅 HSS 탭": 15.0, "초경 탭": 25.0},
+            "합금강": {"HSS 탭": 7.0, "코팅 HSS 탭": 11.0, "초경 탭": 18.0},
+            "스테인리스강 300": {"HSS 탭": 5.0, "코팅 HSS 탭": 8.0, "초경 탭": 14.0},
+            "알루미늄/비철": {"HSS 탭": 18.0, "코팅 HSS 탭": 25.0, "초경 탭": 40.0},
+            "주철": {"HSS 탭": 12.0, "코팅 HSS 탭": 18.0, "초경 탭": 30.0}
+        }
+    },
+    "리머 가공 (초경/HSS 정밀 리머)": {
+        "is_reamer": true,
+        "materials": ["탄소강", "합금강", "스테인리스강 300", "알루미늄/비철", "주철"],
+        "diam": [2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
+        "machining": {"정밀 구멍 리밍 가공": {"ap": "여유량 (0.1~0.3mm)", "ae": "100%"}},
+        "reamer_map": {
+            "탄소강": {"vc": 8.0, "fr_base": 0.12, "note": "수용성 절삭유 필수 공급, 저속 고이송"},
+            "합금강": {"vc": 6.0, "fr_base": 0.10, "note": "충분한 주유 및 칩 여유량 확보"},
+            "스테인리스강 300": {"vc": 4.5, "fr_base": 0.08, "note": "극저속 유지, 융착 방지 오일 권장"},
+            "알루미늄/비철": {"vc": 18.0, "fr_base": 0.20, "note": "고속 가공 가능, 구멍 조도 확보 유의"},
+            "주철": {"vc": 10.0, "fr_base": 0.15, "note": "건식 또는 에어 블로우 가공 가능"}
+        }
     }
-  },
-
-  "SUS-CUT 4날 볼 (EMD88)": {
-    materials: ["합금강 (~HRC20)", "스테인리스강 300/400 (M계열)"],
-    diam: [3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0],
-    machining: { "볼 가공 (Ap 1.0D / Ae 0.5D)": {ap: "1.0D", ae: "0.5D", feed_key: "norm"} },
-    data: {
-      "합금강 (~HRC20)": {
-        rpm:  [13500, 10100, 8090, 6750, 5050, 4050, 3370, 2530, 2030],
-        norm: [275,   370,   410,  480,  620,  780,  750,  700,  680]
-      },
-      "스테인리스강 300/400 (M계열)": {
-        rpm:  [6690,  5050,  4050, 3350, 2500, 2050, 1680, 1250, 1000],
-        norm: [105,   135,   165,  190,  250,  320,  310,  265,  260]
-      }
-    }
-  },
-
-  "SUS-CUT 4날 래디우스 (EMD83)": {
-    materials: ["합금강 (~HRC20)", "스테인리스강 300", "스테인리스강 400"],
-    diam: [1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
-    machining: { "사이드/슬로팅 (Ap 1.0D / Ae 1.0D)": {ap: "1.0D", ae: "1.0D", feed_key: "norm"} },
-    data: {
-      "합금강 (~HRC20)": {
-        rpm:  [40500, 27000, 20300, 16200, 13500, 10100, 8090, 6750, 5050, 4050, 3370, 2890, 2500, 2250, 2000],
-        norm: [300,   300,   300,   300,   275,   370,   410,  480,  620,  780,  750,  670,  630,  620,  630]
-      },
-      "스테인리스강 300": {
-        rpm:  [20000, 13000, 10000, 8000,  6690,  5050,  4050, 3350, 2500, 2050, 1680, 1400, 1250, 1100, 1000],
-        norm: [250,   180,   150,   120,   105,   135,   165,  190,  250,  320,  310,  280,  265,  260,  260]
-      },
-      "스테인리스강 400": {
-        rpm:  [28000, 18500, 14000, 11000, 9350,  7000,  5600, 4700, 3500, 2800, 2350, 2000, 1750, 1550, 1400],
-        norm: [160,   160,   160,   165,   145,   185,   230,  265,  340,  430,  435,  405,  370,  365,  365]
-      }
-    }
-  },
-
-  "SUS-CUT 2날 스퀘어 (EMD81)": {
-    materials: ["탄소강/합금강 (~HRC30)", "탄소강/합금강 (HRC30~40)", "스테인리스강 300"],
-    diam: [1.0, 1.2, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
-    machining: { "슬로팅/사이드 (Ap 0.2D~0.5D / Ae 1.0D)": {ap: "0.2D~0.5D", ae: "1.0D", feed_key: "norm"} },
-    data: {
-      "탄소강/합금강 (~HRC30)": {
-        rpm:  [13000, 12500, 12000, 11560, 10240, 8920, 7560, 6300, 5560, 4200, 3260, 2740, 2470, 2200, 1940, 1750],
-        norm: [220,   210,   200,   190,   200,   210,  300,  320,  350,  380,  330,  280,  250,  220,  195,  170]
-      },
-      "탄소강/합금강 (HRC30~40)": {
-        rpm:  [9800,  9000,  8300,  7560,  6560,  5560, 4620, 3780, 3360, 2520, 2000, 1680, 1520, 1360, 1210, 1060],
-        norm: [160,   150,   140,   120,   130,   140,  180,  190,  220,  200,  160,  130,  120,  110,  95,   80]
-      },
-      "스테인리스강 300": {
-        rpm:  [21000, 17500, 14000, 10500, 8500,  8000, 7500, 6000, 5000, 3750, 3000, 2500, 2150, 1880, 1670, 1500],
-        norm: [170,   140,   110,   85,    70,    65,   75,   80,   80,   90,   90,   95,   100,  105,  110,  115]
-      }
-    }
-  },
-
-  "SUS-CUT 3날 스퀘어 (EHD84)": {
-    materials: ["합금강 (~HRC20)"],
-    diam: [1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
-    machining: { "슬로팅 가공 (Ap 0.5D / Ae 1.0D)": {ap: "0.5D", ae: "1.0D", feed_key: "norm"} },
-    data: {
-      "합금강 (~HRC20)": {
-        rpm:  [30000, 20000, 15000, 12000, 10080, 7550, 6000, 5000, 3750, 3000, 2500, 2150, 1880, 1670, 1500],
-        norm: [990,   1020,  990,   1008,  937,   1404, 1494, 1635, 1698, 1620, 1500, 1548, 1624, 1668, 1701]
-      }
-    }
-  },
-
-  "SUS-CUT 5날 TN라핑 (EHD87)": {
-    materials: ["합금강 (~HRC20)"],
-    diam: [6.0, 8.0, 10.0, 12.0, 16.0, 20.0],
-    machining: { "라핑 사이드컷팅 (Ap 1.5D / Ae 0.5D)": {ap: "1.5D", ae: "0.5D", feed_key: "side"} },
-    data: {
-      "합금강 (~HRC20)": {
-        rpm:  [6750, 5050, 4050, 3370, 2530, 2030],
-        side: [607,  808,  972,  943,  872,  852]
-      }
-    }
-  },
-
-  "YG-1 골드피 드릴 (D1GP123)": {
-    is_d1gp123: true,
-    materials: [
-      "P - 저탄소강 (~0.15%C) [HB125]",
-      "P - 중탄소강 (~0.45%C) [HB190]",
-      "P - 고탄소강 (~0.45%C) [HB250]",
-      "P - 고탄소강 (~0.75%C) [HB270]",
-      "P - 저합금강 [HB180]",
-      "P - 저합금강 [HB275]",
-      "P - 저합금강 [HB300]",
-      "P - 고합금강 및 공구강 [HB200]",
-      "M - 페라이트/마르텐사이트계 [HB200] (STS 430, STS 410 등)",
-      "M - 마르텐사이트계 [HB240] (STS 420, STS 440C 등)",
-      "M - 오스테나이트계 [HB180] (STS 304, STS 316 등)",
-      "K - 회주철 (펄라이트/페라이트) [HB180]",
-      "K - 회주철 (펄라이트) [HB260]",
-      "K - 구상흑연주철 (페라이트) [HB160]",
-      "K - 구상흑연주철 (펄라이트) [HB250]",
-      "K - 가단주철 (페라이트) [HB130]",
-      "K - 가단주철 (펄라이트) [HB230]",
-      "N - 알루미늄-단조 합금 [HB60]",
-      "N - 알루미늄-단조 합금 [HB100]",
-      "N - 알루미늄-주조 합금 (Si<=12%) [HB75]",
-      "N - 비철금속",
-      "S - 순수 티타늄 / 티타늄 합금 [400Rm]"
-    ],
-    diam: [2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0],
-    machining: { "일반 홀 가공 (Drilling)": {ap: "3D/5D", ae: "1.0D"} },
-    diams_ref: [2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 13.0],
-    data: {
-      "P - 저탄소강 (~0.15%C) [HB125]": {vc: 40.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "P - 중탄소강 (~0.45%C) [HB190]": {vc: 35.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "P - 고탄소강 (~0.45%C) [HB250]": {vc: 30.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "P - 고탄소강 (~0.75%C) [HB270]": {vc: 20.0, feeds: [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
-      "P - 저합금강 [HB180]": {vc: 35.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "P - 저합금강 [HB275]": {vc: 30.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "P - 저합금강 [HB300]": {vc: 30.0, feeds: [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
-      "P - 고합금강 및 공구강 [HB200]": {vc: 20.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "M - 페라이트/마르텐사이트계 [HB200] (STS 430, STS 410 등)": {vc: 25.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "M - 마르텐사이트계 [HB240] (STS 420, STS 440C 등)": {vc: 20.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "M - 오스테나이트계 [HB180] (STS 304, STS 316 등)": {vc: 15.0, feeds: [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
-      "K - 회주철 (펄라이트/페라이트) [HB180]": {vc: 40.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "K - 회주철 (펄라이트) [HB260]": {vc: 35.0, feeds: [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
-      "K - 구상흑연주철 (페라이트) [HB160]": {vc: 40.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "K - 구상흑연주철 (펄라이트) [HB250]": {vc: 30.0, feeds: [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
-      "K - 가단주철 (페라이트) [HB130]": {vc: 35.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "K - 가단주철 (펄라이트) [HB230]": {vc: 30.0, feeds: [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.04,0.10], [0.06,0.12], [0.08,0.14], [0.12,0.18]]},
-      "N - 알루미늄-단조 합금 [HB60]": {vc: 65.0, feeds: [[0.05,0.09], [0.07,0.11], [0.12,0.16], [0.12,0.18], [0.14,0.20], [0.16,0.22], [0.22,0.28]]},
-      "N - 알루미늄-단조 합금 [HB100]": {vc: 65.0, feeds: [[0.05,0.09], [0.07,0.11], [0.12,0.16], [0.12,0.18], [0.14,0.20], [0.16,0.22], [0.22,0.28]]},
-      "N - 알루미늄-주조 합금 (Si<=12%) [HB75]": {vc: 50.0, feeds: [[0.05,0.09], [0.07,0.11], [0.12,0.16], [0.12,0.18], [0.14,0.20], [0.16,0.22], [0.22,0.28]]},
-      "N - 비철금속": {vc: 30.0, feeds: [[0.04,0.08], [0.06,0.10], [0.08,0.12], [0.12,0.16], [0.12,0.18], [0.16,0.22], [0.18,0.24]]},
-      "S - 순수 티타늄 / 티타늄 합금 [400Rm]": {vc: 20.0, feeds: [[0.02,0.05], [0.02,0.06], [0.04,0.08], [0.05,0.09], [0.06,0.10], [0.07,0.13], [0.08,0.14]]}
-    }
-  },
-
-  "NACHI 코발트 드릴 (CO-SD)": {
-    is_drill: true,
-    materials: ["탄소강", "합금강", "공구강/고탄소강", "스테인리스강 300", "주철", "알루미늄 합금"],
-    diam: [2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0],
-    machining: { "일반 홀 가공": {ap: "3D/5D", ae: "1.0D"} },
-    data: {
-      "탄소강": { rpm: [3180, 2120, 1590, 1270, 1060, 800, 640, 530, 400], s: [0.05, 0.08, 0.11, 0.14, 0.16, 0.20, 0.24, 0.27, 0.32] },
-      "합금강": { rpm: [2390, 1590, 1190, 950, 800, 600, 480, 400, 300], s: [0.04, 0.07, 0.09, 0.12, 0.14, 0.17, 0.21, 0.24, 0.28] },
-      "공구강/고탄소강": { rpm: [2230, 1490, 1115, 890, 740, 560, 445, 370, 280], s: [0.04, 0.06, 0.08, 0.10, 0.12, 0.15, 0.18, 0.21, 0.25] },
-      "스테인리스강 300": { rpm: [1910, 1270, 950, 760, 640, 480, 380, 320, 240], s: [0.03, 0.05, 0.07, 0.09, 0.11, 0.14, 0.17, 0.20, 0.23] },
-      "주철": { rpm: [3980, 2650, 1990, 1590, 1330, 1000, 800, 660, 500], s: [0.06, 0.10, 0.13, 0.17, 0.19, 0.24, 0.29, 0.32, 0.38] },
-      "알루미늄 합금": { rpm: [6370, 4240, 3180, 2550, 2120, 1590, 1270, 1060, 800], s: [0.06, 0.10, 0.14, 0.18, 0.20, 0.25, 0.30, 0.33, 0.38] }
-    }
-  },
-
-  "HSS 홀가공 (C'B / 카운터보어)": {
-    is_cb: true,
-    materials: ["탄소강", "합금강", "스테인리스강 300", "알루미늄/비철", "주철"],
-    diam: [3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0],
-    machining: { "수직 카운터보어 가공": {ap: "수직 피드 (Plunge)", ae: "1.0D"} },
-    cb_map: {
-      "탄소강": {vc: 18.0, fz: 0.025, note: "절삭유 필수 적용"},
-      "합금강": {vc: 14.0, fz: 0.020, note: "스텝 피드 권장"},
-      "스테인리스강 300": {vc: 10.0, fz: 0.015, note: "저속/저진입, 절삭유 충분히 공급"},
-      "알루미늄/비철": {vc: 35.0, fz: 0.040, note: "칩 포켓 배출 유의"},
-      "주철": {vc: 20.0, fz: 0.030, note: "건식 가공 가능 / 에어블로우"}
-    }
-  },
-
-  "탭 가공 (절삭탭/스파이럴/포인트)": {
-    is_tap: true,
-    materials: ["탄소강", "합금강", "스테인리스강 300", "알루미늄/비철", "주철"],
-    machining: { "나사산 탭핑 가공": {ap: "나사 피치 비례", ae: "100%"} },
-    vc_map: {
-      "탄소강": {"HSS 탭": 10.0, "코팅 HSS 탭": 15.0, "초경 탭": 25.0},
-      "합금강": {"HSS 탭": 7.0, "코팅 HSS 탭": 11.0, "초경 탭": 18.0},
-      "스테인리스강 300": {"HSS 탭": 5.0, "코팅 HSS 탭": 8.0, "초경 탭": 14.0},
-      "알루미늄/비철": {"HSS 탭": 18.0, "코팅 HSS 탭": 25.0, "초경 탭": 40.0},
-      "주철": {"HSS 탭": 12.0, "코팅 HSS 탭": 18.0, "초경 탭": 30.0}
-    }
-  }
 };
 
 const THREAD_PITCH_MAP = {
-  "M2": 0.4, "M2.5": 0.45, "M3": 0.5, "M4": 0.7, "M5": 0.8,
-  "M6": 1.0, "M8": 1.25, "M10": 1.5, "M12": 1.75, "M14": 2.0,
-  "M16": 2.0, "M18": 2.5, "M20": 2.5
+    "M2": 0.4, "M2.5": 0.45, "M3": 0.5, "M4": 0.7, "M5": 0.8,
+    "M6": 1.0, "M8": 1.25, "M10": 1.5, "M12": 1.75, "M14": 2.0,
+    "M16": 2.0, "M18": 2.5, "M20": 2.5
 };
 
-// Global Calc States
-let baseRPM = 0;
+// State Variables
+let baseRpm = 0;
 let baseFeed = 0;
 let baseFeedPerRev = 0;
 let baseDiam = 10.0;
 let baseFlutes = 4;
 let isTapMode = false;
+let isDrillMode = false;
+let isD1gp123Mode = false;
+let isCbMode = false;
+let isReamerMode = false;
+let currentAp = "-";
+let currentAe = "-";
+let currentNote = "-";
 
-// ===========================================================================
-// CALCULATION LOGIC ENGINE
-// ===========================================================================
-function interpolateD1GP123Feed(diam, diamsRef, feedsRef) {
-  if (diam <= diamsRef[0]) return feedsRef[0];
-  if (diam >= diamsRef[diamsRef.length - 1]) return feedsRef[feedsRef.length - 1];
-
-  for (let i = 0; i < diamsRef.length - 1; i++) {
-    if (diam >= diamsRef[i] && diam <= diamsRef[i + 1]) {
-      let t = (diam - diamsRef[i]) / (diamsRef[i + 1] - diamsRef[i]);
-      let fMin = feedsRef[i][0] + t * (feedsRef[i + 1][0] - feedsRef[i][0]);
-      let fMax = feedsRef[i][1] + t * (feedsRef[i + 1][1] - feedsRef[i][1]);
-      return [fMin, fMax];
+// Interpolation Engine
+function interpolateD1gp123Feed(diameter, diamsRef, feedsRef) {
+    if (diameter <= diamsRef[0]) return feedsRef[0];
+    if (diameter >= diamsRef[diamsRef.length - 1]) return feedsRef[feedsRef.length - 1];
+    
+    for (let i = 0; i < diamsRef.length - 1; i++) {
+        if (diamsRef[i] <= diameter && diameter <= diamsRef[i+1]) {
+            let t = (diameter - diamsRef[i]) / (diamsRef[i+1] - diamsRef[i]);
+            let fMin = feedsRef[i][0] + t * (feedsRef[i+1][0] - feedsRef[i][0]);
+            let fMax = feedsRef[i][1] + t * (feedsRef[i+1][1] - feedsRef[i][1]);
+            return [fMin, fMax];
+        }
     }
-  }
-  return feedsRef[0];
+    return feedsRef[0];
 }
 
-function getCondition(seriesKey, material, machiningKey, diamVal, flutesInput, tapType, pitchVal) {
-  const s = CUTTING_DATA[seriesKey];
-  const fDiam = parseFloat(diamVal);
+function getCondition(series, material, machining, diam, flutesInput = 4, tapType = "HSS 탭", pitch = 1.0) {
+    const s = CUTTING_DATA[series];
+    const fDiam = parseFloat(diam);
 
-  // 1. D1GP123
-  if (s.is_d1gp123) {
-    const mdata = s.data[material];
-    const vc = mdata.vc;
-    const rpm = fDiam > 0 ? Math.round((1000.0 * vc) / (Math.PI * fDiam)) : 0;
-    const [fMin, fMax] = interpolateD1GP123Feed(fDiam, s.diams_ref, mdata.feeds);
-    const frRev = (fMin + fMax) / 2.0;
-    const feed = Math.round(rpm * frRev);
-    const note = `카탈로그 수치 보간 (Feed: ${fMin.toFixed(2)}~${fMax.toFixed(2)} mm/rev)`;
-    return { rpm, feed, ap: "3D/5D", ae: "1.0D", flutes: 2, frRev, note, vc };
-  }
+    if (s.is_d1gp123) {
+        let mdata = s.data[material];
+        let vc = mdata.vc;
+        let diamsRef = s.diams_ref;
+        let feedsRef = mdata.feeds;
+        let rpm = fDiam > 0 ? Math.round((1000.0 * vc) / (Math.PI * fDiam)) : 0;
+        let [fMin, fMax] = interpolateD1gp123Feed(fDiam, diamsRef, feedsRef);
+        let frRev = (fMin + fMax) / 2.0;
+        let feed = Math.round(rpm * frRev);
+        let note = `카탈로그 수치 보간 (Feed: ${fMin.toFixed(2)}~${fMax.toFixed(2)} mm/rev)`;
+        return [rpm, feed, "3D/5D", "1.0D", 2, frRev, note];
+    }
 
-  // 2. Tap
-  if (s.is_tap) {
-    const vc = s.vc_map[material][tapType];
-    const rpm = fDiam > 0 ? Math.round((1000.0 * vc) / (Math.PI * fDiam)) : 0;
-    const feed = Math.round(rpm * pitchVal);
-    return { rpm, feed, ap: "피치 동기화", ae: "100%", flutes: 1, frRev: pitchVal, note: `${tapType} 가공 (Pitch: ${pitchVal}mm)`, vc };
-  }
+    if (s.is_tap) {
+        let vc = s.vc_map[material][tapType];
+        if (vc === undefined) throw new Error("해당 재질 조건이 존재하지 않습니다.");
+        let rpm = fDiam > 0 ? Math.round((1000 * vc) / (Math.PI * fDiam)) : 0;
+        let feed = Math.round(rpm * pitch);
+        return [rpm, feed, "피치 동기화", "100%", 1, pitch, `${tapType} 가공 (Pitch: ${pitch}mm)`];
+    }
 
-  // 3. Counterbore (C'B)
-  if (s.is_cb) {
-    const info = s.cb_map[material];
-    const vc = info.vc;
-    const fz = info.fz;
-    const rpm = fDiam > 0 ? Math.round((1000.0 * vc) / (Math.PI * fDiam)) : 0;
-    const feed = Math.round(rpm * fz * flutesInput);
-    const frRev = rpm > 0 ? feed / rpm : 0;
-    return { rpm, feed, ap: "수직 피드", ae: "1.0D", flutes: flutesInput, frRev, note: info.note, vc };
-  }
+    if (s.is_cb) {
+        let info = s.cb_map[material];
+        let vc = info.vc;
+        let fz = info.fz;
+        let rpm = fDiam > 0 ? Math.round((1000 * vc) / (Math.PI * fDiam)) : 0;
+        let feed = Math.round(rpm * fz * flutesInput);
+        let frRev = rpm > 0 ? feed / rpm : 0;
+        return [rpm, feed, "수직 피드", "1.0D", flutesInput, frRev, info.note];
+    }
 
-  const diamList = s.diam.map(x => parseFloat(x));
-  const idx = diamList.indexOf(fDiam);
-  if (idx === -1) throw new Error("해당 인선직경 데이터가 없습니다.");
+    if (s.is_reamer) {
+        let info = s.reamer_map[material];
+        let vc = info.vc;
+        let frRev = fDiam > 0 ? info.fr_base * Math.pow(fDiam / 6.0, 0.5) : info.fr_base;
+        let rpm = fDiam > 0 ? Math.round((1000 * vc) / (Math.PI * fDiam)) : 0;
+        let feed = Math.round(rpm * frRev);
+        let flutes = fDiam >= 6.0 ? 6 : 4;
+        return [rpm, feed, "0.1~0.3mm", "100%", flutes, frRev, info.note];
+    }
 
-  // 4. Drill (NACHI)
-  if (s.is_drill) {
-    const mdata = s.data[material];
-    const rpm = mdata.rpm[idx];
-    const frRev = mdata.s[idx];
-    const feed = Math.round(rpm * frRev);
-    const vc = Math.round((Math.PI * fDiam * rpm) / 1000.0);
-    return { rpm, feed, ap: "3D/5D", ae: "1.0D", flutes: 2, frRev, note: "권장 드릴 조건", vc };
-  }
+    let diamList = s.diam.map(x => parseFloat(x));
+    let idx = diamList.indexOf(fDiam);
+    if (idx === -1) throw new Error("해당 시리즈에 존재하지 않는 인선직경입니다.");
 
-  // 5. Endmills
-  const mach = s.machining[machiningKey];
-  const mdata = s.data[material];
-  const feedKey = mach.feed_key || "side";
+    if (s.is_drill) {
+        let mdata = s.data[material];
+        let rpm = mdata.rpm[idx];
+        let frRev = mdata.s[idx];
+        let feed = Math.round(rpm * frRev);
+        return [rpm, feed, "-", "-", 2, frRev, "권장 드릴 조건"];
+    }
 
-  let rpm, feed;
-  if (mdata.rpm_slot) {
-    rpm = feedKey === "slot" ? mdata.rpm_slot[idx] : mdata.rpm_side[idx];
-    feed = mdata[feedKey][idx];
-  } else if (mdata.rpm_norm) {
-    rpm = feedKey === "norm" ? mdata.rpm_norm[idx] : mdata.rpm_hsc[idx];
-    feed = mdata[feedKey][idx];
-  } else {
-    rpm = mdata.rpm[idx];
-    feed = mdata[feedKey][idx];
-  }
+    let mach = s.machining[machining];
+    let mdata = s.data[material];
+    let feedKey = mach.feed_key || "side";
+    let rpm, feed;
 
-  let flutes = 4;
-  if (seriesKey.includes("5날") || seriesKey.includes("3~5날")) flutes = fDiam < 25.0 ? 4 : 5;
-  else if (seriesKey.includes("3날")) flutes = 3;
-  else if (seriesKey.includes("2날")) flutes = 2;
-  else if (seriesKey.includes("6날")) flutes = 6;
+    if ("rpm_slot" in mdata) {
+        rpm = (feedKey === "slot") ? mdata.rpm_slot[idx] : mdata.rpm_side[idx];
+        feed = mdata[feedKey][idx];
+    } else if ("rpm_norm" in mdata) {
+        rpm = (feedKey === "norm") ? mdata.rpm_norm[idx] : mdata.rpm_hsc[idx];
+        feed = mdata[feedKey][idx];
+    } else {
+        rpm = mdata.rpm[idx];
+        feed = mdata[feedKey][idx];
+    }
 
-  const frRev = rpm > 0 ? feed / rpm : 0;
-  const vc = Math.round((Math.PI * fDiam * rpm) / 1000.0);
-  return { rpm, feed, ap: mach.ap, ae: mach.ae, flutes, frRev, note: "-", vc };
+    let ap = mach.ap, ae = mach.ae;
+    let flutes = 4;
+    if (series.includes("5날") || series.includes("3~5날")) flutes = fDiam < 25.0 ? 4 : 5;
+    else if (series.includes("3날")) flutes = 3;
+    else if (series.includes("2날")) flutes = 2;
+    else if (series.includes("6날")) flutes = 6;
+
+    let frRev = rpm > 0 ? feed / rpm : 0;
+    return [rpm, feed, ap, ae, flutes, frRev, "-"];
 }
 
 // ===========================================================================
-// UI CONTROL FUNCTIONS
+// UI LOGIC & EVENT HANDLERS
 // ===========================================================================
-function initApp() {
-  const seriesSelect = document.getElementById("series-select");
-  seriesSelect.innerHTML = "";
-  Object.keys(CUTTING_DATA).forEach(s => {
-    const opt = document.createElement("option");
-    opt.value = s;
-    opt.textContent = s;
-    seriesSelect.appendChild(opt);
-  });
-  onSeriesChange();
+window.addEventListener('DOMContentLoaded', () => {
+    initSeriesCombo();
+    registerServiceWorker();
+});
+
+function initSeriesCombo() {
+    const seriesSelect = document.getElementById('seriesSelect');
+    seriesSelect.innerHTML = '';
+    Object.keys(CUTTING_DATA).forEach(key => {
+        let opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = key;
+        seriesSelect.appendChild(opt);
+    });
+    onSeriesChange();
 }
 
 function onSeriesChange() {
-  const seriesKey = document.getElementById("series-select").value;
-  const s = CUTTING_DATA[seriesKey];
-  isTapMode = !!s.is_tap;
+    const series = document.getElementById('seriesSelect').value;
+    const s = CUTTING_DATA[series];
 
-  // Populate Materials
-  const matSelect = document.getElementById("material-select");
-  matSelect.innerHTML = "";
-  s.materials.forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = m;
-    opt.textContent = m;
-    matSelect.appendChild(opt);
-  });
+    isTapMode = !!s.is_tap;
+    isCbMode = !!s.is_cb;
+    isD1gp123Mode = !!s.is_d1gp123;
+    isDrillMode = !!s.is_drill;
+    isReamerMode = !!s.is_reamer;
 
-  // Populate Machining
-  const machSelect = document.getElementById("machining-select");
-  machSelect.innerHTML = "";
-  Object.keys(s.machining).forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = m;
-    opt.textContent = m;
-    machSelect.appendChild(opt);
-  });
-
-  // UI Toggles
-  const pitchGroup = document.getElementById("pitch-group");
-  const extGroup = document.getElementById("ext-group");
-  const diamLabel = document.getElementById("diam-label");
-  const diamSelect = document.getElementById("diam-select");
-
-  if (isTapMode) {
-    diamLabel.textContent = "4. 탭 규격";
-    pitchGroup.style.display = "block";
-    extGroup.style.display = "none";
-    
-    diamSelect.innerHTML = "";
-    Object.keys(THREAD_PITCH_MAP).forEach(t => {
-      const opt = document.createElement("option");
-      opt.value = t;
-      opt.textContent = t;
-      diamSelect.appendChild(opt);
+    // Materials
+    const materialSelect = document.getElementById('materialSelect');
+    materialSelect.innerHTML = '';
+    s.materials.forEach(m => {
+        let opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        materialSelect.appendChild(opt);
     });
-    diamSelect.value = "M8";
-    document.getElementById("pitch-input").value = THREAD_PITCH_MAP["M8"];
-  } else {
-    diamLabel.textContent = "4. 공구 직경 (mm)";
-    pitchGroup.style.display = "none";
-    extGroup.style.display = "block";
 
-    diamSelect.innerHTML = "";
-    (s.diam || []).forEach(d => {
-      const opt = document.createElement("option");
-      opt.value = d;
-      opt.textContent = d;
-      diamSelect.appendChild(opt);
+    // Machining
+    const machiningSelect = document.getElementById('machiningSelect');
+    machiningSelect.innerHTML = '';
+    Object.keys(s.machining).forEach(m => {
+        let opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        machiningSelect.appendChild(opt);
     });
-    if (s.diam && s.diam.length > 0) {
-      diamSelect.value = s.diam[Math.min(4, s.diam.length - 1)];
-    }
-  }
 
-  calculate();
-}
+    // Flutes
+    const flutesSelect = document.getElementById('flutesSelect');
+    if (series.includes("5날") || series.includes("3~5날")) flutesSelect.value = "4날";
+    else if (series.includes("2날")) flutesSelect.value = "2날";
+    else if (series.includes("3날")) flutesSelect.value = "3날";
+    else if (series.includes("6날") || isReamerMode) flutesSelect.value = "6날";
+    else flutesSelect.value = "4날";
 
-function onDiamChange() {
-  if (isTapMode) {
-    const tapSpec = document.getElementById("diam-select").value;
-    if (THREAD_PITCH_MAP[tapSpec]) {
-      document.getElementById("pitch-input").value = THREAD_PITCH_MAP[tapSpec];
-    }
-  }
-  calculate();
-}
+    // Toggle UI for Tap
+    const pitchFrame = document.getElementById('pitchFrame');
+    const tapTypeSelect = document.getElementById('tapTypeSelect');
+    const diamTitleLabel = document.getElementById('diamTitleLabel');
+    const extTitleLabel = document.getElementById('extTitleLabel');
+    const diamSelect = document.getElementById('diamSelect');
 
-function calculate() {
-  try {
-    const seriesKey = document.getElementById("series-select").value;
-    const material = document.getElementById("material-select").value;
-    const machiningKey = document.getElementById("machining-select").value;
-    const diamVal = document.getElementById("diam-select").value;
-    const pitchVal = parseFloat(document.getElementById("pitch-input").value) || 1.0;
-    const flutesInput = parseInt(document.getElementById("ext-select").value) || 4;
+    diamSelect.innerHTML = '';
 
-    if (!seriesKey || !material || !machiningKey || !diamVal) return;
-
-    let tapType = "HSS 탭";
-    let actualDiam = parseFloat(diamVal);
     if (isTapMode) {
-      actualDiam = parseFloat(diamVal.replace("M", "")) || 8.0;
+        diamTitleLabel.textContent = "4. 탭 규격";
+        extTitleLabel.textContent = "5. 탭 종류";
+        flutesSelect.style.display = "none";
+        tapTypeSelect.style.display = "block";
+        pitchFrame.style.display = "flex";
+
+        Object.keys(THREAD_PITCH_MAP).forEach(t => {
+            let opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            diamSelect.appendChild(opt);
+        });
+        diamSelect.value = "M8";
+        document.getElementById('pitchInput').value = THREAD_PITCH_MAP["M8"];
+    } else {
+        diamTitleLabel.textContent = "4. 공구 직경 (mm)";
+        extTitleLabel.textContent = "5. 날 수 (고정/자동)";
+        flutesSelect.style.display = "block";
+        tapTypeSelect.style.display = "none";
+        pitchFrame.style.display = "none";
+
+        (s.diam || []).forEach(d => {
+            let opt = document.createElement('option');
+            opt.value = d;
+            opt.textContent = d;
+            diamSelect.appendChild(opt);
+        });
+        if (s.diam && s.diam.length > 0) {
+            diamSelect.value = s.diam[Math.min(4, s.diam.length - 1)];
+        }
     }
 
-    const res = getCondition(seriesKey, material, machiningKey, actualDiam, flutesInput, tapType, pitchVal);
-
-    baseRPM = res.rpm;
-    baseFeed = res.feed;
-    baseFeedPerRev = res.frRev;
-    baseDiam = actualDiam;
-    baseFlutes = res.flutes;
-
-    applyGaugeOverride(res);
-  } catch (err) {
-    console.error(err);
-  }
+    onCalculate();
 }
 
-function applyGaugeOverride(baseRes) {
-  const rpmScale = parseInt(document.getElementById("rpm-gauge").value);
-  const feedScale = parseInt(document.getElementById("feed-gauge").value);
+function onDiamSelect() {
+    if (isTapMode) {
+        let tapSpec = document.getElementById('diamSelect').value.toUpperCase().trim();
+        if (THREAD_PITCH_MAP[tapSpec]) {
+            document.getElementById('pitchInput').value = THREAD_PITCH_MAP[tapSpec];
+        }
+    }
+    onCalculate();
+}
 
-  document.getElementById("rpm-gauge-val").textContent = `${rpmScale}%`;
-  document.getElementById("feed-gauge-val").textContent = `${feedScale}%`;
+function onCalculate() {
+    try {
+        let series = document.getElementById('seriesSelect').value;
+        let material = document.getElementById('materialSelect').value;
+        let machining = document.getElementById('machiningSelect').value;
+        let diamStr = document.getElementById('diamSelect').value;
 
-  const finalRPM = Math.round(baseRPM * (rpmScale / 100.0));
-  const finalFeedPerRev = baseFeedPerRev * (feedScale / 100.0);
-  const finalFeed = Math.round(finalRPM * finalFeedPerRev);
+        if (!series || !material || !machining || !diamStr) return;
 
-  const fz = baseFlutes > 0 ? (finalFeedPerRev / baseFlutes).toFixed(3) : "0.000";
-  const vc = baseDiam > 0 ? Math.round((Math.PI * baseDiam * finalRPM) / 1000.0) : 0;
+        let rpm, feed, ap, ae, flutes, frRev, note;
 
-  document.getElementById("res-rpm").textContent = `회전수 (RPM) : ${finalRPM.toLocaleString()} min-1`;
-  document.getElementById("res-feed").textContent = `이송속도 (Feed) : ${finalFeed.toLocaleString()} mm/min`;
-  document.getElementById("res-spec").textContent = `절삭속도(Vc) : ${vc} m/min | 이송 : ${finalFeedPerRev.toFixed(3)} mm/rev (fz: ${fz} mm/t)`;
+        if (isTapMode) {
+            let tapSpec = diamStr.toUpperCase();
+            let diam = parseFloat(tapSpec.replace("M", ""));
+            let pitch = parseFloat(document.getElementById('pitchInput').value) || THREAD_PITCH_MAP[tapSpec] || 1.0;
+            let tapType = document.getElementById('tapTypeSelect').value;
+            [rpm, feed, ap, ae, flutes, frRev, note] = getCondition(series, material, machining, diam, 1, tapType, pitch);
+        } else {
+            let diam = parseFloat(diamStr);
+            let flutesIn = parseInt(document.getElementById('flutesSelect').value.replace("날", "")) || 4;
+            [rpm, feed, ap, ae, flutes, frRev, note] = getCondition(series, material, machining, diam, flutesIn);
+        }
+
+        baseRpm = rpm;
+        baseFeed = feed;
+        baseFeedPerRev = frRev;
+        baseDiam = isTapMode ? parseFloat(diamStr.replace("M","")) : parseFloat(diamStr);
+        baseFlutes = flutes;
+        currentAp = ap;
+        currentAe = ae;
+        currentNote = note;
+
+        if (!isTapMode) {
+            document.getElementById('flutesSelect').value = `${flutes}날`;
+        }
+
+        applyGaugeOverride();
+    } catch (err) {
+        document.getElementById('rpmLabel').textContent = "회전수 (RPM) : 계산 불가";
+        document.getElementById('feedLabel').textContent = "이송속도 (Feed) : 계산 불가";
+        document.getElementById('specLabel').textContent = `오류: ${err.message}`;
+        document.getElementById('noteLabel').textContent = "절입/비고 : 입력값 확인 필요";
+    }
+}
+
+function applyGaugeOverride() {
+    if (baseRpm <= 0) return;
+
+    let rpmR = parseInt(document.getElementById('rpmScale').value) / 100.0;
+    let feedR = parseInt(document.getElementById('feedScale').value) / 100.0;
+
+    document.getElementById('rpmScaleVal').textContent = `${document.getElementById('rpmScale').value}%`;
+    document.getElementById('feedScaleVal').textContent = `${document.getElementById('feedScale').value}%`;
+
+    let calcRpm = Math.round(baseRpm * rpmR);
+    let effFeedPerRev = baseFeedPerRev * feedR;
+    let calcFeed = Math.round(calcRpm * effFeedPerRev);
+
+    let vc = baseDiam > 0 ? (Math.PI * baseDiam * calcRpm) / 1000.0 : 0.0;
+
+    document.getElementById('rpmLabel').textContent = `회전수 (RPM) : ${calcRpm.toLocaleString()} min-1`;
+    document.getElementById('feedLabel').textContent = `이송속도 (Feed) : ${calcFeed.toLocaleString()} mm/min`;
+
+    if (isTapMode) {
+        let p = parseFloat(document.getElementById('pitchInput').value) || 1.0;
+        document.getElementById('specLabel').textContent = `절삭속도(Vc) : ${vc.toFixed(1)} m/min | 피치 : ${p.toFixed(2)} mm/rev`;
+    } else if (isDrillMode || isD1gp123Mode || isReamerMode) {
+        document.getElementById('specLabel').textContent = `절삭속도(Vc) : ${vc.toFixed(1)} m/min | 회전당이송(fr) : ${effFeedPerRev.toFixed(3)} mm/rev`;
+    } else {
+        let fz = baseFlutes > 0 ? effFeedPerRev / baseFlutes : 0.0;
+        document.getElementById('specLabel').textContent = `절삭속도(Vc) : ${vc.toFixed(1)} m/min | 1날당이송(fz) : ${fz.toFixed(3)} mm/t`;
+    }
+
+    document.getElementById('noteLabel').textContent = `절입/비고 : Ap: ${currentAp} / Ae: ${currentAe} | ${currentNote}`;
 }
 
 function resetGauges() {
-  document.getElementById("rpm-gauge").value = 100;
-  document.getElementById("feed-gauge").value = 100;
-  applyGaugeOverride();
+    document.getElementById('rpmScale').value = 100;
+    document.getElementById('feedScale').value = 100;
+    applyGaugeOverride();
 }
 
 // Modal Logic
-function openModal() { document.getElementById("calc-modal").style.display = "flex"; }
-function closeModal() { document.getElementById("calc-modal").style.display = "none"; }
-function calcModalSubmit() {
-  const vc = parseFloat(document.getElementById("m-vc").value);
-  const d = parseFloat(document.getElementById("m-d").value);
-  const z = parseFloat(document.getElementById("m-z").value) || 1;
-  const fz = parseFloat(document.getElementById("m-fz").value) || 0;
-
-  if (!vc || !d) { alert("절삭 속도(Vc)와 공구 직경(D)을 입력하세요."); return; }
-
-  const rpm = Math.round((1000 * vc) / (Math.PI * d));
-  const feed = Math.round(rpm * z * fz);
-
-  document.getElementById("m-rpm-res").textContent = `회전수 (RPM) : ${rpm.toLocaleString()} min-1`;
-  document.getElementById("m-feed-res").textContent = `이송속도 (Feed) : ${feed.toLocaleString()} mm/min`;
+function openMiniCalc() {
+    document.getElementById('calcModal').style.display = 'flex';
 }
-function resetModal() {
-  document.getElementById("m-vc").value = "";
-  document.getElementById("m-d").value = "";
-  document.getElementById("m-z").value = "4";
-  document.getElementById("m-fz").value = "";
-  document.getElementById("m-rpm-res").textContent = "회전수 (RPM) : 0 min-1";
-  document.getElementById("m-feed-res").textContent = "이송속도 (Feed) : 0 mm/min";
+function closeMiniCalc() {
+    document.getElementById('calcModal').style.display = 'none';
+}
+function calcMini() {
+    let vc = parseFloat(document.getElementById('mcVc').value) || 0;
+    let d = parseFloat(document.getElementById('mcD').value) || 0;
+    let z = parseFloat(document.getElementById('mcZ').value) || 1;
+    let fz = parseFloat(document.getElementById('mcFz').value) || 0;
+
+    if (d <= 0) return;
+
+    let rpm = Math.round((1000 * vc) / (Math.PI * d));
+    let feed = Math.round(rpm * z * fz);
+
+    document.getElementById('mcResRpm').textContent = `${rpm.toLocaleString()} min-1`;
+    document.getElementById('mcResFeed').textContent = `${feed.toLocaleString()} mm/min`;
 }
 
 // ===========================================================================
-// SERVICE WORKER REGISTRATION
+// PWA SERVICE WORKER INLINE REGISTRATION
 // ===========================================================================
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(err => console.log("SW Reg Error:", err));
-  });
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        const swCode = `
+            const CACHE_NAME = 'cutting-calc-v1.8.0';
+            self.addEventListener('install', e => {
+                e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['/'])));
+            });
+            self.addEventListener('fetch', e => {
+                e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+            });
+        `;
+        const blob = new Blob([swCode], { type: 'text/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl).catch(err => console.error("SW Reg Error:", err));
+    }
 }
-
-window.onload = initApp;
 </script>
 </body>
 </html>
