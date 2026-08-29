@@ -1,21 +1,21 @@
 {
-  "short_name": "절삭조건계산기",
-  "name": "YG-1 & NACHI 절삭 조건 계산기",
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "icon-512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
+  "name": "절삭 조건 계산기",
+  "short_name": "절삭계산기",
+  "description": "추천 절삭 조건 및 회전수/이송속도 보정 계산기",
   "start_url": "./index.html",
+  "display": "standalone",
   "background_color": "#f8f9fa",
   "theme_color": "#0d6efd",
-  "display": "standalone",
-  "orientation": "portrait"
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3524/3524659.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3524/3524659.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
