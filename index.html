@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>절삭 조건 계산기 v1.8.0</title>
 
-  <!-- PWA 설정 메타 태그 -->
+  <!-- PWA 설정 메타 태그 및 Manifest 연결 -->
+  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0d6efd">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -140,7 +141,7 @@
       color: #6c757d;
     }
 
-    /* RPM / FEED 보정 게이지 영역 (투명도 없이 명확한 불투명 배경 적용) */
+    /* RPM / FEED 보정 게이지 영역 */
     .gauge-box {
       background: #ffffff;
       border: 1px solid var(--border-color);
@@ -329,7 +330,7 @@
     <div class="res-note" id="noteLabel">절입/비고 : -</div>
   </div>
 
-  <!-- 게이지 영역 (불투명 흰색 배경 #ffffff 적용) -->
+  <!-- 게이지 영역 -->
   <fieldset class="gauge-box">
     <legend>⚙️ 회전수 / 회전당이송 보정 게이지 (50% ~ 150%)</legend>
     <div class="gauge-row">
@@ -1095,23 +1096,12 @@ function calcMini() {
     document.getElementById('mcResFeed').textContent = `${feed.toLocaleString()} mm/min`;
 }
 
-// ===========================================================================
-// PWA SERVICE WORKER INLINE REGISTRATION
-// ===========================================================================
+// Service Worker Registration (외부 파일 등록 방식)
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-        const swCode = `
-            const CACHE_NAME = 'cutting-calc-v1.8.0';
-            self.addEventListener('install', e => {
-                e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['/'])));
-            });
-            self.addEventListener('fetch', e => {
-                e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
-            });
-        `;
-        const blob = new Blob([swCode], { type: 'text/javascript' });
-        const swUrl = URL.createObjectURL(blob);
-        navigator.serviceWorker.register(swUrl).catch(err => console.error("SW Reg Error:", err));
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker Registered:', reg.scope))
+            .catch(err => console.error('SW Registration Error:', err));
     }
 }
 </script>
